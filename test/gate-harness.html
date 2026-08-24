@@ -1,0 +1,65 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Lighting gate — fixture run</title>
+<style>
+ body{font:13px ui-monospace,Menlo,monospace;background:#F1EFEA;color:#14120F;padding:24px;max-width:900px;margin:auto}
+ table{border-collapse:collapse;width:100%;margin-top:16px}
+ th,td{border-bottom:1px solid rgba(0,0,0,.15);padding:7px 9px;text-align:right}
+ th:first-child,td:first-child{text-align:left}
+ .PASS{color:#17301F;font-weight:700}.REJECT{color:#B0271C;font-weight:700}.WARN{color:#8a6410}
+ td img{height:40px;width:40px;object-fit:cover;vertical-align:middle;border:1px solid #0002}
+ h1{font-size:15px;letter-spacing:.14em;text-transform:uppercase}
+</style>
+<h1>Lighting gate — fixture run</h1>
+<p id="cfg"></p>
+<table id="t"><thead><tr>
+  <th>fixture</th><th>expected</th><th>verdict</th><th>meanLuma</th><th>shadow%</th><th>lapVar</th><th>notes</th>
+</tr></thead><tbody></tbody></table>
+<pre id="json"></pre>
+<script src="../public/config.js"></script>
+<script src="../public/js/gate.js"></script>
+<script>
+const CFG = window.NAILSCAN_CONFIG.gate;
+document.getElementById('cfg').textContent =
+  `thresholds: meanLuma >= ${CFG.minMeanLuma} · shadow(<${CFG.shadowLumaCutoff}) <= ${CFG.maxShadowPct}% · lapVar warn < ${CFG.minLaplacianVar}`;
+
+const FIX = [
+  ['fixtures/01-window-lit.jpg', 'PASS',   'real photo, unmodified'],
+  ['fixtures/02-dim-room.jpg',   'REJECT', 'brightness x0.22'],
+  ['fixtures/03-dark.jpg',       'REJECT', 'brightness x0.10'],
+  ['fixtures/04-backlit.jpg',    'REJECT', 'hands in shadow, blown window band'],
+  ['fixtures/05-soft-focus.jpg', 'PASS',   'gaussian blur 4.5 — expect soft_focus warn']
+];
+
+const load = src => new Promise((res, rej) => {
+  const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src;
+});
+
+(async () => {
+  const tb = document.querySelector('#t tbody');
+  const out = [];
+  let allOk = true;
+  for (const [src, expect, note] of FIX) {
+    const img = await load(src);
+    const v = NailScanGate.check(img, CFG);
+    const got = v.pass ? 'PASS' : 'REJECT';
+    const ok = got === expect;
+    if (!ok) allOk = false;
+    const warn = v.warnings.map(w => w.code).join(',');
+    const fail = v.fails.map(f => f.code).join(',');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><img src="${src}"> ${src.split('/').pop()}</td>
+      <td>${expect}</td>
+      <td class="${got}">${got}${ok ? '' : ' ✗MISMATCH'}</td>
+      <td>${v.metrics.meanLuma.toFixed(1)}</td>
+      <td>${v.metrics.shadowPct.toFixed(1)}</td>
+      <td>${v.metrics.laplacianVar.toFixed(1)}</td>
+      <td class="WARN">${[fail, warn, note].filter(Boolean).join(' · ')}</td>`;
+    tb.appendChild(tr);
+    out.push({ src, expect, got, ok, fails: fail, warns: warn, m: v.metrics });
+  }
+  document.getElementById('json').textContent =
+    (allOk ? 'ALL FIXTURES MATCHED\n\n' : 'MISMATCHES PRESENT\n\n') + JSON.stringify(out, null, 1);
+  window.__RESULT__ = { allOk, out };
+})();
+</script>

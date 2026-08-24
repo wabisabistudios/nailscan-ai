@@ -1,0 +1,207 @@
+{
+ "ok": true,
+ "id": "demo01x",
+ "record": {
+  "v": 2,
+  "id": "demo01x",
+  "name": "",
+  "created_at": "2026-08-24T09:00:00.000Z",
+  "concern": null,
+  "tier": "manageable",
+  "wear": "gel",
+  "display": {
+   "headline": "Your nails are asking for <span class=\"italic\">a little love.</span>",
+   "verdict": {
+    "num": "2/4",
+    "label": "A LITTLE LOVE",
+    "line": "Lovely base. Some wear. <span class=\"hl\">Entirely reversible.</span>",
+    "sub": "No drama, no upsell. Good condition carrying some wear — mapped nail by nail below, with the schedule that undoes it."
+   },
+   "checks": [
+    {
+     "k": "Free edge · index + middle + ring, tips",
+     "v": "The tips are peeling in layers — the signature of <b>coatings taken off the hard way.</b>",
+     "status": "note"
+    },
+    {
+     "k": "Surface · all five, mid-plate",
+     "v": "Fine vertical ridges with light dryness — asking for <b>moisture, not repair.</b>",
+     "status": "note"
+    },
+    {
+     "k": "Cuticle · thumb + index, cuticles",
+     "v": "Cuticles are intact but dry — a drop of oil a day is the whole prescription.",
+     "status": "note"
+    },
+    {
+     "k": "Wear · all five, base",
+     "v": "Visible grow-out at the base — the coat is past its best and starting to lever at the edges.",
+     "status": "note"
+    },
+    {
+     "k": "Cuticle · all five",
+     "v": "Healthy, intact cuticles — whoever’s been minding them, keep going.",
+     "status": "good"
+    }
+   ],
+   "map": {
+    "hand": "left",
+    "marks": [
+     {
+      "color": "red",
+      "zone": "tip",
+      "fingers": [
+       1,
+       2,
+       3
+      ],
+      "label": "Free edge"
+     },
+     {
+      "color": "marigold",
+      "zone": "mid",
+      "fingers": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "label": "Surface"
+     },
+     {
+      "color": "marigold",
+      "zone": "base",
+      "fingers": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "label": "Wear"
+     }
+    ],
+    "cuticle": "marigold"
+   },
+   "figures": {
+    "cross_section": true,
+    "growth": true
+   },
+   "calendar": {
+    "intro": "Dates computed from your photo. The wear grows <b>out</b>, not deeper. Save them — this is the whole plan.",
+    "milestones": [
+     {
+      "date": "2026-09-07",
+      "label": "Gel removal-by",
+      "sub": "(soaked, never peeled)",
+      "kind": "action",
+      "primary": true,
+      "service": "gel-removal",
+      "cta": "Secure the Sep 7 removal slot",
+      "ctaSub": "Soak-off removal, never peeled · 20 min"
+     },
+     {
+      "date": "2026-09-21",
+      "label": "Strengthening visit",
+      "sub": "polish-free block ends",
+      "kind": "action",
+      "service": "biab-nail-strengthening-therapy"
+     },
+     {
+      "date": "2026-10-09",
+      "label": "Recovery check",
+      "sub": "ridges should soften",
+      "kind": "check"
+     },
+     {
+      "date": "2026-11-02",
+      "label": "Tip damage fully grown out",
+      "sub": "≈ 3mm of growth a month",
+      "kind": "goal"
+     }
+    ],
+    "grown_out": "2026-11-02",
+    "book": {
+     "label": "Secure the Sep 7 removal slot",
+     "sub": "Soak-off removal, never peeled · 20 min",
+     "service": "gel-removal",
+     "date": "2026-09-07"
+    }
+   },
+   "carry": {
+    "now": {
+     "tag": "Now",
+     "name": "Glazed nude",
+     "line": "Sheer, glossy, one coat — lets the plate breathe and recover while still looking finished.",
+     "when": "Safe during recovery"
+    },
+    "later": {
+     "tag": "After Nov 2",
+     "name": "Chrome",
+     "line": "Mirror finish that loves an even, healthy plate.",
+     "when": "Unlocked by your calendar"
+    }
+   },
+   "medical": null,
+   "quality_issues": []
+  },
+  "perception": {
+   "findings": [
+    {
+     "code": "peeling_free_edge",
+     "fingers": [
+      "index",
+      "middle",
+      "ring"
+     ],
+     "zone": "tip",
+     "severity": "moderate"
+    },
+    {
+     "code": "ridging_vertical",
+     "fingers": [],
+     "zone": "mid",
+     "severity": "mild"
+    },
+    {
+     "code": "cuticle_dry",
+     "fingers": [
+      "thumb",
+      "index"
+     ],
+     "zone": "cuticle",
+     "severity": "mild"
+    },
+    {
+     "code": "polish_grow_out",
+     "fingers": [],
+     "zone": "base",
+     "severity": "mild"
+    },
+    {
+     "code": "healthy_cuticle",
+     "fingers": [],
+     "zone": "cuticle",
+     "severity": "mild"
+    }
+   ],
+   "flags": [],
+   "photo_quality": {
+    "score": 0.86,
+    "issues": []
+   },
+   "confidence": 0.82,
+   "nails_visible": 5,
+   "hand": "left",
+   "undertone": "warm",
+   "nail_bed": "balanced"
+  },
+  "source": "try-demo",
+  "assets": {
+   "image": "",
+   "report": ""
+  }
+ },
+ "record_version": 2
+}

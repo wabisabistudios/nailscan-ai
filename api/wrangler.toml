@@ -1,0 +1,61 @@
+name = "nailscan-try-api"
+main = "src/index.js"
+compatibility_date = "2026-05-01"
+
+# Target account: Ad@basedaesthetics.co.
+# NOTE: the wrangler OAuth token on this machine is wabisabi.chennai@gmail.com and
+# has access to ONE account (6fc1ea596c194da25f8a76d86a324ba4). It cannot reach the
+# account below. Re-auth as Ad@basedaesthetics.co, or export a scoped API token,
+# before any command here will run. See docs/deploy.md.
+account_id = "cb9d1952be3e0c9b91c3da6462bac872"
+
+# No `routes`. nailscan.ai's DNS is hosted in GoHighLevel, not Cloudflare, so the
+# zone does not exist here and a Worker route on try.nailscan.ai/api/* is not
+# possible. The Worker is served from its workers.dev subdomain and called
+# cross-origin from the Pages site — which is exactly why ALLOWED_ORIGINS matters.
+workers_dev = true
+
+[vars]
+VISION_MODEL = "claude-sonnet-4-6"
+SITE_BASE = "https://try.nailscan.ai"
+# Comma-separated, exact scheme+host. An origin not on this list is answered with
+# allowed[0], which the browser rejects — the API fails closed.
+ALLOWED_ORIGINS = "https://try.nailscan.ai,https://nailscan-try.pages.dev,http://localhost:8791"
+
+# Secrets — NOT stored here. Set once per environment:
+#   wrangler secret put ANTHROPIC_API_KEY     # its own key, not Based's
+#   wrangler secret put GHL_WEBHOOK_URL       # NailScan.ai sub-account inbound webhook
+#                                             # (location cj1dKYGBhaLLrI6e0Jkg)
+
+# ---------------------------------------------------------------------------
+# KV REPORTS — REQUIRED, not optional.
+#
+# The scan writes the record here and POST /api/lead reads it back to attach the
+# contact. Without this binding every lead submission returns `unknown_scan`.
+# Records are PERMANENT by design — no expirationTtl, ever.
+#
+#   wrangler kv namespace create REPORTS
+# then paste the printed id and uncomment.
+# ---------------------------------------------------------------------------
+# [[kv_namespaces]]
+# binding = "REPORTS"
+# id = "PASTE_REPORTS_NAMESPACE_ID"
+
+# Optional per-IP rate limiting (12 scans/hr, 20 lead posts/hr). Without it the
+# endpoints are open.
+#   wrangler kv namespace create RATE_LIMIT
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT"
+# id = "PASTE_RATE_LIMIT_NAMESPACE_ID"
+
+# ---------------------------------------------------------------------------
+# R2 — optional. Stores scans/<id>/photo.jpg and an archival report.html,
+# served back at /api/scans/<id>/<file>. Without it, scan_image_url is "".
+#   wrangler r2 bucket create nailscan-try-scans
+# ---------------------------------------------------------------------------
+# [[r2_buckets]]
+# binding = "SCANS"
+# bucket_name = "nailscan-try-scans"
+
+[observability]
+enabled = true

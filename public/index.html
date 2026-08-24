@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NailScan — scan your own nails</title>
+<meta name="description" content="Photograph your nails and get the reading a NailScan salon gives its clients. Cosmetic assessment, not a diagnosis.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#F1EFEA">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2314120F'/%3E%3Cpath d='M11 8h10v12a5 5 0 0 1-10 0z' fill='%23F1EFEA'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<div class="unit">
+
+  <header class="unit-head">
+    <div class="wordmark" id="wordmark">NAILSCAN</div>
+    <div class="unit-meta" id="unit-meta">FIELD UNIT 01</div>
+  </header>
+
+  <main class="unit-body">
+
+    <!-- ============================================================ INTRO -->
+    <section class="stage is-active" id="stage-intro" aria-labelledby="intro-h">
+      <p class="eyebrow">Live scanner · one photo</p>
+      <h1 id="intro-h">Scan your own nails.</h1>
+      <p class="lede" id="intro-lede">Photograph your nails. Get the reading your clients would get.</p>
+
+      <div class="btn-row">
+        <button class="btn" id="btn-start" type="button">
+          <span>Scan your nails</span><span class="arrow">→</span>
+        </button>
+      </div>
+
+      <dl class="readout" aria-label="What the scan does">
+        <dt>Photo</dt><dd>One hand, four or five nails</dd>
+        <dt>Light check</dt><dd>On device, before upload</dd>
+        <dt>Reading</dt><dd>Surface, plate, cuticle, structure</dd>
+        <dt>Time</dt><dd>About 20 seconds</dd>
+      </dl>
+    </section>
+
+    <!-- ========================================================== CAPTURE -->
+    <section class="stage" id="stage-capture" aria-labelledby="cap-h">
+      <h2 id="cap-h" class="sr-only">Take the photo</h2>
+
+      <div class="viewport is-idle" id="viewport">
+        <video id="cam" playsinline muted autoplay style="display:none"></video>
+        <div class="brackets" id="brackets" style="display:none"><i></i><i></i><i></i><i></i></div>
+        <div class="viewport-hint" id="cap-hint" style="display:none">Palm down · fill the brackets · face a window</div>
+      </div>
+
+      <p class="eyebrow mute" id="cap-status">Requesting camera…</p>
+
+      <div class="btn-row">
+        <button class="btn" id="btn-shutter" type="button" disabled>
+          <span>Take photo</span><span class="arrow">●</span>
+        </button>
+        <button class="btn-quiet" id="btn-upload" type="button">
+          <span>Upload a photo instead</span><span class="arrow">↑</span>
+        </button>
+      </div>
+      <input type="file" id="file" accept="image/*" class="sr-only" tabindex="-1">
+    </section>
+
+    <!-- =========================================================== REJECT -->
+    <section class="stage" id="stage-reject" aria-labelledby="rej-h" role="alert">
+      <div class="reject-card">
+        <p class="eyebrow">Rejected · not uploaded</p>
+        <h2 id="rej-h">Too dark to read your nails.</h2>
+        <p class="fine" id="rej-copy">Face a window or turn on a light, then retake.</p>
+        <dl class="readout" id="rej-readout"></dl>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="btn-retake" type="button">
+          <span>Retake</span><span class="arrow">↺</span>
+        </button>
+      </div>
+      <p class="fine" style="margin-top:16px;color:var(--ink-3);font-size:12px">
+        This photo stayed on your device. Nothing was sent.
+      </p>
+    </section>
+
+    <!-- ======================================================== ANALYZING -->
+    <section class="stage" id="stage-analyzing" aria-labelledby="an-h">
+      <h2 id="an-h" class="sr-only">Reading your photo</h2>
+      <div class="viewport scanfield" id="scanfield">
+        <img id="an-photo" alt="">
+        <div class="scanline"></div>
+      </div>
+
+      <div class="progress">
+        <div class="progress-track"><div class="progress-fill" id="an-fill"></div></div>
+        <div class="progress-line">
+          <b id="an-step">Uploading frame</b>
+          <span class="data" id="an-pct">00%</span>
+        </div>
+      </div>
+      <p class="fine" style="margin-top:22px;color:var(--ink-3)" id="an-note">
+        The reading is generated from this photo alone. No history, no guessing.
+      </p>
+    </section>
+
+    <!-- =========================================================== REPORT -->
+    <section class="stage" id="stage-report" aria-labelledby="rep-h">
+
+      <div class="verdict reveal" style="--i:0">
+        <img class="thumb" id="rep-thumb" alt="">
+        <span class="verdict-badge" id="rep-badge"><s></s><em id="rep-badge-t"></em></span>
+        <h1 id="rep-h"></h1>
+        <p class="verdict-line" id="rep-line"></p>
+        <p class="verdict-sub" id="rep-sub"></p>
+      </div>
+
+      <div class="reveal" style="--i:1" id="rep-checks-block">
+        <div class="section-head">
+          <p class="eyebrow">What we saw</p>
+          <span class="n" id="rep-checks-n"></span>
+        </div>
+        <ul class="checks" id="rep-checks"></ul>
+      </div>
+
+      <div class="reveal" style="--i:2" id="rep-medical-block" hidden>
+        <div class="section-head"><p class="eyebrow">Worth a check</p></div>
+        <p class="callout" id="rep-medical"></p>
+      </div>
+
+      <!-- locked: care calendar -->
+      <div class="reveal locked" style="--i:3" id="rep-lock" hidden>
+        <div class="section-head">
+          <p class="eyebrow">Care calendar</p>
+          <span class="n" id="rep-cal-n">LOCKED</span>
+        </div>
+        <div class="locked-body" id="rep-cal-body" aria-hidden="true">
+          <p class="fine" id="rep-cal-intro" style="margin:14px 0 4px"></p>
+          <ul class="timeline" id="rep-timeline"></ul>
+          <div id="rep-carry"></div>
+        </div>
+        <p class="locked-lockline" id="rep-lockline"></p>
+      </div>
+
+      <!-- contact card -->
+      <div class="reveal" style="--i:4" id="rep-form-block">
+        <div class="card" style="margin-top:26px">
+          <p class="eyebrow">Unlock the full care calendar</p>
+          <h2 id="form-h">Where should it go?</h2>
+          <p class="fine" style="margin-bottom:20px">Dated milestones computed from your photo, plus what suits your nails now.</p>
+
+          <form id="lead-form" novalidate>
+            <div class="field" id="f-name">
+              <label for="in-name">Your name</label>
+              <input id="in-name" name="name" type="text" autocomplete="name" required>
+              <span class="err">Enter your name</span>
+            </div>
+            <div class="field" id="f-salon">
+              <label for="in-salon">Salon</label>
+              <input id="in-salon" name="salon" type="text" autocomplete="organization" required>
+              <span class="err">Enter your salon name</span>
+            </div>
+            <div class="field" id="f-phone">
+              <label for="in-phone">Phone</label>
+              <div class="field-pair">
+                <select id="in-country" name="country" aria-label="Country dial code"></select>
+                <input id="in-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required>
+              </div>
+              <span class="err">Enter a valid phone number</span>
+            </div>
+            <div class="field" id="f-email">
+              <label for="in-email">Email</label>
+              <input id="in-email" name="email" type="email" autocomplete="email" inputmode="email" required>
+              <span class="err">Enter a valid email</span>
+            </div>
+
+            <p class="consent" id="consent-line"></p>
+
+            <button class="btn" id="btn-lead" type="submit">
+              <span id="btn-lead-t">Unlock the calendar</span><span class="arrow">→</span>
+            </button>
+            <p class="err sr-only" id="lead-error" role="status"></p>
+          </form>
+        </div>
+      </div>
+
+      <!-- confirmation, replaces the card in place -->
+      <div id="rep-done" hidden style="margin-top:26px">
+        <span class="stamp"><s></s>Calendar unlocked</span>
+        <h2>It’s on its way.</h2>
+        <p class="fine" style="margin-bottom:22px" id="done-copy"></p>
+        <a class="crosslink" id="cross" href="#" target="_blank" rel="noopener">
+          <span id="cross-t"></span><span class="arrow">→</span>
+        </a>
+        <button class="btn-text" id="btn-again" type="button">Scan another hand</button>
+      </div>
+
+    </section>
+
+    <!-- ============================================================ ERROR -->
+    <section class="stage" id="stage-error" aria-labelledby="err-h" role="alert">
+      <p class="eyebrow">Scan failed</p>
+      <h1 id="err-h">That didn't go through.</h1>
+      <p class="lede" id="err-copy">The reading service didn't answer. Your photo was not stored.</p>
+      <div class="btn-row">
+        <button class="btn" id="btn-err-retry" type="button">
+          <span>Try again</span><span class="arrow">↺</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="unit-foot">
+    <p id="legal-line"></p>
+    <p id="foot-brand"></p>
+  </footer>
+
+</div>
+
+<script src="/config.js"></script>
+<script src="/js/gate.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
