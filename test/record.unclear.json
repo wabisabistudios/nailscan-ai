@@ -1,0 +1,42 @@
+{
+ "ok": true,
+ "id": "demounc",
+ "record": {
+  "v": 2,
+  "id": "demounc",
+  "name": "",
+  "created_at": "2026-08-24T09:00:00.000Z",
+  "concern": null,
+  "tier": "unclear",
+  "wear": "unknown",
+  "display": {
+   "headline": "We couldn’t quite <span class=\"italic\">read that one.</span>",
+   "verdict": {
+    "num": "4/4",
+    "label": "COULDN’T READ",
+    "line": "Too soft to call. <span class=\"hl\">We’d rather say so than guess.</span>",
+    "sub": "The photo came through a little too unclear for an honest reading — and honest is the whole point."
+   },
+   "checks": [],
+   "map": null,
+   "figures": {
+    "cross_section": false,
+    "growth": false
+   },
+   "calendar": null,
+   "carry": null,
+   "medical": null,
+   "quality_issues": [
+    "low_light",
+    "blur"
+   ]
+  },
+  "perception": null,
+  "source": "try-demo",
+  "assets": {
+   "image": "",
+   "report": ""
+  }
+ },
+ "record_version": 2
+}

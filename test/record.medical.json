@@ -1,0 +1,81 @@
+{
+ "ok": true,
+ "id": "demomed",
+ "record": {
+  "v": 2,
+  "id": "demomed",
+  "name": "",
+  "created_at": "2026-08-24T09:00:00.000Z",
+  "concern": null,
+  "tier": "medical",
+  "wear": "bare",
+  "display": {
+   "headline": "We noticed something worth <span class=\"italic\">checking first.</span>",
+   "verdict": {
+    "num": "3/4",
+    "label": "WORTH A CHECK",
+    "line": "Most likely nothing. <span class=\"hl\">Checked is better than guessed.</span>",
+    "sub": "We spotted a change that sits outside cosmetic care. It’s very often completely harmless — but we’d rather be careful with you than clever."
+   },
+   "checks": [
+    {
+     "k": "Plate · ring, tips",
+     "v": "The plate reads thin — bendy tips, shadows under light. It rebuilds; it just needs the cycle broken.",
+     "status": "note"
+    }
+   ],
+   "map": {
+    "hand": "left",
+    "marks": [
+     {
+      "color": "red",
+      "zone": "tip",
+      "fingers": [
+       3
+      ],
+      "label": "Plate"
+     }
+    ],
+    "cuticle": "good"
+   },
+   "figures": {
+    "cross_section": false,
+    "growth": false
+   },
+   "calendar": null,
+   "carry": null,
+   "medical": "We’re a nail studio, not a clinic, so we can’t diagnose — but we noticed a change in color or structure that’s best looked at by a dermatologist before any cosmetic treatment. It’s very often nothing; a quick check just gives everyone peace of mind. Bring this reading along if it helps.",
+   "quality_issues": []
+  },
+  "perception": {
+   "findings": [
+    {
+     "code": "thinning_plate",
+     "fingers": [
+      "ring"
+     ],
+     "zone": "tip",
+     "severity": "moderate"
+    }
+   ],
+   "flags": [
+    "onycholysis_lifting"
+   ],
+   "photo_quality": {
+    "score": 0.86,
+    "issues": []
+   },
+   "confidence": 0.82,
+   "nails_visible": 5,
+   "hand": "left",
+   "undertone": "warm",
+   "nail_bed": "balanced"
+  },
+  "source": "try-demo",
+  "assets": {
+   "image": "",
+   "report": ""
+  }
+ },
+ "record_version": 2
+}

@@ -180,8 +180,19 @@
             <button class="btn" id="btn-lead" type="submit">
               <span id="btn-lead-t">Unlock the calendar</span><span class="arrow">→</span>
             </button>
-            <p class="err sr-only" id="lead-error" role="status"></p>
           </form>
+        </div>
+      </div>
+
+      <!-- unreadable scan: a retake is the only useful action -->
+      <div class="reveal" style="--i:4" id="rep-retake-block" hidden>
+        <div class="card" style="margin-top:26px">
+          <p class="eyebrow">Next step</p>
+          <h2>Try one more frame.</h2>
+          <p class="fine" style="margin-bottom:20px" id="rep-retake-copy"></p>
+          <button class="btn" id="btn-rep-retake" type="button">
+            <span>Retake the photo</span><span class="arrow">↺</span>
+          </button>
         </div>
       </div>
 

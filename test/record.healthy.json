@@ -1,0 +1,135 @@
+{
+ "ok": true,
+ "id": "demohea",
+ "record": {
+  "v": 2,
+  "id": "demohea",
+  "name": "",
+  "created_at": "2026-08-24T09:00:00.000Z",
+  "concern": null,
+  "tier": "healthy",
+  "wear": "bare",
+  "display": {
+   "headline": "Your nails are <span class=\"italic\">genuinely healthy.</span>",
+   "verdict": {
+    "num": "1/4",
+    "label": "HEALTHY",
+    "line": "Strong, even, cared-for. <span class=\"hl\">Ready for anything.</span>",
+    "sub": "No repair needed and nothing to fix — which makes them the perfect canvas. The calendar below is just maintenance rhythm."
+   },
+   "checks": [
+    {
+     "k": "Plate · all five",
+     "v": "A smooth, even plate — whatever you’re doing, it’s working.",
+     "status": "good"
+    },
+    {
+     "k": "Cuticle · all five",
+     "v": "Healthy, intact cuticles — whoever’s been minding them, keep going.",
+     "status": "good"
+    },
+    {
+     "k": "Structure · all five",
+     "v": "Even length and shape across the hand.",
+     "status": "good"
+    }
+   ],
+   "map": {
+    "hand": "left",
+    "marks": [],
+    "cuticle": "good"
+   },
+   "figures": {
+    "cross_section": false,
+    "growth": false
+   },
+   "calendar": {
+    "intro": "Nothing to undo — this is simply the rhythm that keeps them this way.",
+    "milestones": [
+     {
+      "date": "2026-08-26",
+      "label": "Book anything",
+      "sub": "Mani, art, gel — your nails are ready",
+      "kind": "action",
+      "primary": true,
+      "service": "classic-manicure",
+      "cta": "Book a manicure or nail art"
+     },
+     {
+      "date": "2026-08-31",
+      "label": "Daily oil habit set",
+      "sub": "One drop, every night",
+      "kind": "check"
+     },
+     {
+      "date": "2026-10-19",
+      "label": "Shape check",
+      "sub": "A tidy-up keeps the line perfect",
+      "kind": "goal"
+     }
+    ],
+    "grown_out": null,
+    "book": {
+     "label": "Book a manicure or nail art",
+     "sub": "",
+     "service": "classic-manicure",
+     "date": "2026-08-26"
+    }
+   },
+   "carry": {
+    "now": {
+     "tag": "Now",
+     "name": "Micro French",
+     "line": "A whisper of a tip line — neat on any length.",
+     "when": "Your nails are ready"
+    },
+    "later": {
+     "tag": "Also yours",
+     "name": "Chrome",
+     "line": "Mirror finish that loves an even, healthy plate.",
+     "when": "Whenever you like"
+    }
+   },
+   "medical": null,
+   "quality_issues": []
+  },
+  "perception": {
+   "findings": [
+    {
+     "code": "healthy_plate",
+     "fingers": [],
+     "zone": "whole",
+     "severity": "mild"
+    },
+    {
+     "code": "healthy_cuticle",
+     "fingers": [],
+     "zone": "cuticle",
+     "severity": "mild"
+    },
+    {
+     "code": "even_structure",
+     "fingers": [],
+     "zone": "whole",
+     "severity": "mild"
+    }
+   ],
+   "flags": [],
+   "photo_quality": {
+    "score": 0.86,
+    "issues": []
+   },
+   "confidence": 0.82,
+   "nails_visible": 5,
+   "hand": "left",
+   "undertone": "warm",
+   "nail_bed": "balanced"
+  },
+  "source": "try-demo",
+  "assets": {
+   "image": "",
+   "report": ""
+  }
+ },
+ "record_version": 2
+}

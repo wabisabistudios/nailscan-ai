@@ -338,9 +338,28 @@
           li.appendChild(row); c.appendChild(li);
         });
       }
-    } else {
-      // No calendar (medical / unclear) — nothing to lock, so no form gate either.
+    } else if (rec.tier === 'unclear') {
+      // Nothing was read, so there is nothing to gate and nothing worth sending.
+      // Asking for her details here would be collecting a lead for a blank
+      // report. Offer the retake instead.
       $('rep-form-block').hidden = true;
+      $('rep-retake-block').hidden = false;
+      var issues = (d.quality_issues || []).map(function (q) {
+        return ({ blur: 'soft focus', glare: 'glare', too_far: 'shot from too far',
+                  cropped: 'nails cropped', low_light: 'low light' })[q] || q;
+      });
+      $('rep-retake-copy').textContent = (issues.length ? 'What got in the way: ' + issues.join(', ') + '. ' : '')
+        + 'Daylight, hand flat and palm down, four or five nails filling the frame.';
+    } else {
+      // Medical tier: a real reading with no calendar. There is nothing to
+      // unlock, so the card drops the lock framing and simply offers to send it.
+      // Without this branch the whole tier captured no lead at all.
+      $('form-h').textContent = 'Send this reading to yourself.';
+      $('btn-lead-t').textContent = 'Send it to me';
+      var eb = $('rep-form-block').querySelector('.eyebrow');
+      if (eb) eb.textContent = 'Keep a copy';
+      var sub = $('rep-form-block').querySelector('.card .fine');
+      if (sub) sub.textContent = 'Worth having on hand if you decide to get it looked at.';
     }
 
     stage('report');
@@ -349,9 +368,32 @@
 
   function revealIn() {
     var els = document.querySelectorAll('#stage-report .reveal');
-    Array.prototype.forEach.call(els, function (el) {
-      if (!el.hidden) el.classList.add('is-in');
+    // The stage was display:none a moment ago. Force a layout read so the
+    // browser has a start value to transition FROM, otherwise the class change
+    // is batched with the display change and the transition is skipped.
+    document.getElementById('stage-report').offsetHeight;
+    requestAnimationFrame(function () {
+      Array.prototype.forEach.call(els, function (el) {
+        if (!el.hidden) el.classList.add('is-in');
+      });
     });
+    // Self-heal. The stagger is decoration; the report being READABLE is not.
+    // If the class never landed, or a transition started and never progressed
+    // (a throttled or backgrounded tab freezes the animation clock, which stalls
+    // an in-flight transition at its start value), force the end state and drop
+    // the transition so it paints. Checked well after the longest run:
+    // max delay 4x90ms + 550ms duration.
+    setTimeout(function () {
+      Array.prototype.forEach.call(els, function (el) {
+        if (el.hidden) return;
+        el.classList.add('is-in');
+        if (parseFloat(getComputedStyle(el).opacity) < 0.99) {
+          el.style.transition = 'none';
+          el.style.opacity = '1';
+          el.style.transform = 'none';
+        }
+      });
+    }, 1400);
   }
 
   function shortDate(iso) {
@@ -431,12 +473,17 @@
   });
 
   function unlock(name, email) {
-    $('rep-lock').classList.add('is-open');
-    $('rep-cal-body').setAttribute('aria-hidden', 'false');
-    $('rep-cal-n').textContent = 'OPEN';
+    var hadLock = !$('rep-lock').hidden;
+    if (hadLock) {
+      $('rep-lock').classList.add('is-open');
+      $('rep-cal-body').setAttribute('aria-hidden', 'false');
+      $('rep-cal-n').textContent = 'OPEN';
+    }
     $('rep-form-block').hidden = true;
+    document.querySelector('#rep-done .stamp').lastChild.textContent =
+      hadLock ? 'Calendar unlocked' : 'Reading sent';
     $('done-copy').textContent = 'A copy of this reading is on its way to ' + email
-      + '. Your calendar is open below.';
+      + (hadLock ? '. Your calendar is open below.' : '.');
     $('rep-done').hidden = false;
     $('rep-done').scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'center' });
   }
@@ -447,6 +494,7 @@
   $('btn-retake').addEventListener('click', openCamera);
   $('btn-err-retry').addEventListener('click', openCamera);
   $('btn-again').addEventListener('click', function () { location.reload(); });
+  $('btn-rep-retake').addEventListener('click', openCamera);
 
   $('btn-shutter').addEventListener('click', function () {
     if (!video.videoWidth) return;

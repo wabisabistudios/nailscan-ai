@@ -10,7 +10,8 @@ true schema. Regenerate with test/mkrecord.mjs.
 import http.server, json, os, socketserver, sys, time
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public')
-FIXTURE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'record.manageable.json')
+HERE = os.path.dirname(os.path.abspath(__file__))
+FIXTURE = os.path.join(HERE, 'record.manageable.json')
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8791
 DELAY = float(os.environ.get('MOCK_DELAY', '2.0'))   # stand in for the vision call
 
@@ -32,7 +33,7 @@ class H(http.server.SimpleHTTPRequestHandler):
         # a file picker. Fixtures live in test/, never in the deploy root.
         if self.path.startswith('/__fixtures/'):
             name = os.path.basename(self.path)
-            path = os.path.join(os.path.dirname(FIXTURE), 'fixtures', name)
+            path = os.path.join(HERE, 'fixtures', name)
             if os.path.isfile(path):
                 with open(path, 'rb') as f:
                     b = f.read()
@@ -49,12 +50,22 @@ class H(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         n = int(self.headers.get('content-length') or 0)
         body = json.loads(self.rfile.read(n) or b'{}')
-        if self.path == '/api/analyze-nails':
-            print(f'  [mock] analyze: image {len(body.get("image",""))} b64 chars')
+        path, _, query = self.path.partition('?')
+        if path == '/api/analyze-nails':
+            # ?tier=healthy|manageable|medical|unclear picks which generated
+            # record to return, so every report shape can be walked locally.
+            tier = 'manageable'
+            for pair in query.split('&'):
+                if pair.startswith('tier='):
+                    tier = pair[5:]
+            fixture = os.path.join(HERE, f'record.{tier}.json')
+            if not os.path.isfile(fixture):
+                fixture = FIXTURE
+            print(f'  [mock] analyze tier={tier}: image {len(body.get("image",""))} b64 chars')
             time.sleep(DELAY)
-            with open(FIXTURE) as f:
+            with open(fixture) as f:
                 return self._json(json.load(f))
-        if self.path == '/api/lead':
+        if path == '/api/lead':
             print('  [mock] lead:', {k: v for k, v in body.items() if k != 'image'})
             return self._json({'ok': True, 'delivered': True})
         self._json({'error': 'not_found'}, 404)

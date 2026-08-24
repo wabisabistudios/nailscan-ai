@@ -345,12 +345,18 @@ h2 { font-size:21px; line-height:1.2; letter-spacing:-.015em; font-weight:650; m
 
 /* -------------------------------------------------------------- reveals -- */
 
-.reveal { opacity:0; transform:translateY(12px); }
-.reveal.is-in {
-  animation:reveal .62s var(--ease-out) forwards;
-  animation-delay:calc(var(--i,0) * 90ms);
+/* Staggered reveal, driven by TRANSITION rather than a keyframe animation.
+   A keyframe animation with fill-mode `both` pins the from-state (opacity 0)
+   for the whole of its delay, so if the animation never progresses — a
+   backgrounded tab, a frozen compositor — the content stays invisible forever.
+   A transition has no such hold: adding `.is-in` sets the final value, and the
+   transition only decorates the way there. Worst case it snaps into view. */
+.reveal {
+  opacity:0; transform:translateY(12px);
+  transition:opacity .55s var(--ease-out), transform .55s var(--ease-out);
+  transition-delay:calc(var(--i,0) * 90ms);
 }
-@keyframes reveal { to { opacity:1; transform:none; } }
+.reveal.is-in { opacity:1; transform:none; }
 
 .sr-only {
   position:absolute; width:1px; height:1px; padding:0; margin:-1px;
