@@ -1,0 +1,134 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PORTAL — internal provisioning
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Rides on app.css and dashboard.css rather than restating them: the form
+   controls, dropzones, colour well and phone frame are the same components
+   the salon console uses. This file is only the things the portal has that
+   nothing else does — the numbered steps, the service grid, the build log.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.portal { max-width: 1560px; margin: 0 auto; padding: 0 26px 60px; }
+
+.ptop {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 22px 0 20px; border-bottom: 1px solid var(--line); margin-bottom: 26px;
+  position: sticky; top: 0; background: var(--bg); z-index: 20; flex-wrap: wrap;
+}
+.plock { display: flex; align-items: center; gap: 13px; }
+.pmk { width: 34px; height: 34px; flex: none; display: grid; place-items: center; }
+.pmk svg { width: 100%; height: 100%; }
+.pmk path { fill: var(--accent); opacity: .9; }
+/* An h1, so the page has one. Sized like the lockup it is, not like a title. */
+.pn1 { display: block; font-size: 1rem; font-weight: 400; letter-spacing: -.01em; margin: 0; }
+.pn2 { display: block; font-family: var(--mono); font-size: .58rem; letter-spacing: .18em;
+       text-transform: uppercase; color: var(--faint); margin-top: 3px; }
+
+.pgrid { display: grid; grid-template-columns: 1fr 430px; gap: 28px; align-items: start; }
+
+/* ── Steps ─────────────────────────────────────────────────────────────── */
+
+.pstep {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  padding: 22px 24px; margin-bottom: 16px;
+}
+.pstep-h { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 6px; }
+.pnum {
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .1em; color: var(--accent);
+  border: 1px solid var(--accent-line); border-radius: 4px; padding: 6px 8px; flex: none;
+}
+.pstep-h h2 { font-size: 1.06rem; }
+.pstep-h p { font-size: .84rem; line-height: 1.6; color: var(--fg-2); margin-top: 7px; max-width: 62ch; }
+
+/* Same two-column shape as the console's .setrow, but the label column is
+   wider — these fields need a sentence of explanation, not a word. */
+.prow { display: grid; grid-template-columns: 230px 1fr; gap: 18px; align-items: center;
+        padding: 15px 0; border-bottom: 1px solid var(--line); }
+.prow:last-child { border-bottom: 0; padding-bottom: 0; }
+.prow:first-of-type { margin-top: 10px; }
+.prow > * { min-width: 0; }
+.prow label { font-size: .88rem; color: var(--fg-2); }
+.prow .desc { font-size: .75rem; line-height: 1.5; color: var(--faint); margin-top: 4px; }
+.prow input[type=text], .prow input[type=tel], .prow input[type=number] {
+  width: 100%; padding: 11px 13px; font: inherit; font-size: .88rem;
+  background: var(--panel-2); border: 1px solid var(--line-2);
+  border-radius: var(--radius); color: var(--fg);
+}
+.prow input::placeholder { color: var(--nontext); }
+.prow input:focus { border-color: var(--accent-line); outline: none; box-shadow: 0 0 0 3px var(--accent-wash); }
+
+.dz-sm { padding: 12px 14px; }
+
+/* ── Services ──────────────────────────────────────────────────────────── */
+
+.svc { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.svc:last-child { border-bottom: 0; padding-bottom: 0; }
+.svc-k { font-family: var(--mono); font-size: .66rem; letter-spacing: .1em; color: var(--accent);
+         margin-bottom: 11px; }
+.svc-f { display: grid; grid-template-columns: 2.2fr 1fr 1fr 1fr; gap: 10px; }
+.svc-f > * { min-width: 0; }
+.svc-f label { display: block; }
+.svc-f label span {
+  display: block; font-family: var(--mono); font-size: .56rem; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--faint); margin-bottom: 6px;
+}
+.svc-f input {
+  width: 100%; padding: 10px 12px; font: inherit; font-size: .86rem;
+  background: var(--panel-2); border: 1px solid var(--line-2);
+  border-radius: var(--radius); color: var(--fg);
+}
+.svc-f input:focus { border-color: var(--accent-line); outline: none; box-shadow: 0 0 0 3px var(--accent-wash); }
+
+/* ── Build ─────────────────────────────────────────────────────────────── */
+
+.pbuild { border-color: var(--line-2); }
+
+.pissues {
+  border: 1px solid var(--warn); border-radius: var(--radius);
+  background: rgba(224,140,58,.07); padding: 14px 16px; margin: 16px 0 4px;
+}
+.pissues .pi-h { font-size: .88rem; color: var(--fg); }
+.pissues ul { margin: 9px 0 0; padding-left: 18px; }
+.pissues li { font-size: .82rem; line-height: 1.65; color: var(--fg-2); }
+
+.pdl { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.pdl .btn { flex: 1 1 240px; }
+.pnote { font-size: .8rem; line-height: 1.65; color: var(--faint); margin-top: 14px; }
+.pnote code { font-family: var(--mono); font-size: .74rem; color: var(--fg-2); }
+
+.plog {
+  margin-top: 16px; background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 12px 14px; max-height: 190px; overflow-y: auto;
+  font-family: var(--mono); font-size: .72rem; line-height: 1.9; color: var(--dim);
+}
+.plog .ok { color: var(--ok); }
+.plog .bad { color: var(--warn); }
+
+/* ── Preview ───────────────────────────────────────────────────────────── */
+
+.ppreview { position: sticky; top: 104px; }
+.pph { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+       margin-bottom: 14px; flex-wrap: wrap; }
+.pph h2 { font-size: .98rem; }
+.ppreview .phoneframe { aspect-ratio: 390 / 780; transition: aspect-ratio .3s var(--ease); }
+/* The console is not a phone. Switching the preview to it and leaving the
+   frame at 390 wide showed the salon's dashboard as a column of nothing. */
+.ppreview .phoneframe.wide { aspect-ratio: 4 / 3; border-radius: 10px; }
+.pphint { font-size: .78rem; line-height: 1.6; color: var(--faint); margin-top: 14px; }
+
+/* ── Narrow ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1180px) {
+  .pgrid { grid-template-columns: 1fr; }
+  .ppreview { position: static; }
+  .ppreview .phoneframe { max-width: 390px; margin: 0 auto; }
+  .ppreview .phoneframe.wide { max-width: 100%; }
+}
+
+@media (max-width: 720px) {
+  .portal { padding: 0 16px 44px; }
+  .pstep { padding: 18px 16px; }
+  .prow { grid-template-columns: 1fr; gap: 10px; align-items: start; }
+  .svc-f { grid-template-columns: 1fr 1fr; }
+  .pdl .btn { flex: 1 1 100%; }
+}

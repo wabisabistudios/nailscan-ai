@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Provisioning — NailScan</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#07080A">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/geist-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/geist-mono-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/app/app.css">
+<link rel="stylesheet" href="../assets/app/dashboard.css">
+<link rel="stylesheet" href="../assets/app/portal.css">
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="portal">
+
+  <header class="ptop">
+    <div class="plock">
+      <span class="pmk" aria-hidden="true">
+        <svg viewBox="0 0 200 200"><g data-blades></g></svg>
+      </span>
+      <span>
+        <h1 class="pn1">NailScan</h1>
+        <span class="pn2">Provisioning</span>
+      </span>
+    </div>
+    <div class="pmeta">
+      <span class="pill" data-build-state>Nothing to build yet</span>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1" class="pgrid">
+
+    <!-- ═══════════ FORM ═══════════ -->
+    <div class="pform">
+
+      <div class="pstep">
+        <div class="pstep-h"><span class="pnum">01</span>
+          <div><h2>Who is it for</h2>
+            <p>The name on every screen and every report she is sent.</p></div>
+        </div>
+
+        <div class="prow">
+          <div><label for="f-name">Salon name</label>
+            <div class="desc">Full trading name.</div></div>
+          <input id="f-name" type="text" data-f="name" placeholder="Polish &amp; Pearl Nail Studio" autocomplete="off">
+        </div>
+
+        <div class="prow">
+          <div><label for="f-short">Short name</label>
+            <div class="desc">Used in text messages and tight spaces. Left blank we take the first word.</div></div>
+          <input id="f-short" type="text" data-f="short" placeholder="Polish &amp; Pearl" autocomplete="off">
+        </div>
+
+        <div class="prow">
+          <div><label for="f-id">Tenant ID</label>
+            <div class="desc">Lowercase, no spaces. Names the build and the download. Derived from the
+              salon name unless you change it.</div></div>
+          <input id="f-id" type="text" data-f="id" placeholder="polish-pearl" autocomplete="off"
+                 pattern="[a-z0-9-]+" spellcheck="false">
+        </div>
+
+        <div class="prow">
+          <div><label>Logo</label>
+            <div class="desc">PNG or SVG on a transparent background. Replaces the monogram everywhere
+              at once, including inside the report.</div></div>
+          <div>
+            <label class="dropzone" data-logo-zone>
+              <span class="dz-prev" data-logo-prev></span>
+              <span>
+                <span class="dz-t" data-logo-t>Drop a logo, or click to choose</span>
+                <span class="dz-s">Square works best · up to 512 KB</span>
+              </span>
+              <input type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" data-logo-input>
+            </label>
+            <button class="linkbtn" data-logo-clear hidden style="margin-top:9px">Remove logo</button>
+          </div>
+        </div>
+
+        <div class="prow">
+          <div><label for="f-mono">Monogram</label>
+            <div class="desc">The fallback when there is no logo.</div></div>
+          <input id="f-mono" type="text" data-f="monogram" maxlength="2" style="max-width:96px" placeholder="P">
+        </div>
+      </div>
+
+      <div class="pstep">
+        <div class="pstep-h"><span class="pnum">02</span>
+          <div><h2>How it looks</h2>
+            <p>One colour drives every hover, glow, focus ring and wash. You do not pick nine.</p></div>
+        </div>
+
+        <div class="prow">
+          <div><label for="f-accent">Brand colour</label>
+            <div class="desc">We measure the contrast and choose a black or white button label for you.</div></div>
+          <div class="pickrow">
+            <input id="f-accent" class="colorwell" type="color" data-f="accent" value="#FF5233">
+            <input type="text" class="hexfield" data-hex value="#FF5233" spellcheck="false"
+                   aria-label="Brand colour hex code">
+            <span class="pill" data-contrast>—</span>
+          </div>
+        </div>
+
+        <div class="prow">
+          <div><label>Typeface</label>
+            <div class="desc">No preset touches a font CDN. A webfont that fails on salon wifi reflows
+              the report on her phone.</div></div>
+          <div>
+            <div class="fontpick" data-fonts role="group" aria-label="Typeface"></div>
+            <label class="dropzone dz-sm" data-font-zone style="margin-top:10px">
+              <span>
+                <span class="dz-t" data-font-t>Or upload their own font</span>
+                <span class="dz-s">woff2, woff, ttf or otf · up to 1 MB</span>
+              </span>
+              <input type="file" accept=".woff2,.woff,.ttf,.otf,font/woff2,font/woff" data-font-input>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="pstep">
+        <div class="pstep-h"><span class="pnum">03</span>
+          <div><h2>Where to reach them</h2>
+            <p>The report tells her who to call. This is that number.</p></div>
+        </div>
+
+        <div class="prow">
+          <div><label for="f-phone">Phone</label></div>
+          <input id="f-phone" type="tel" data-f="phone" placeholder="(512) 555-0134" autocomplete="off">
+        </div>
+        <div class="prow">
+          <div><label for="f-city">City</label></div>
+          <input id="f-city" type="text" data-f="city" placeholder="Austin, TX" autocomplete="off">
+        </div>
+        <div class="prow">
+          <div><label for="f-address">Address</label></div>
+          <input id="f-address" type="text" data-f="address" placeholder="1400 S Congress Ave, Austin, TX 78704" autocomplete="off">
+        </div>
+        <div class="prow">
+          <div><label for="f-site">Website</label></div>
+          <input id="f-site" type="text" data-f="site" placeholder="polishandpearl.com" autocomplete="off">
+        </div>
+        <div class="prow">
+          <div><label for="f-book">Booking link</label>
+            <div class="desc">Where the book button sends her. Their existing booking system is fine.</div></div>
+          <input id="f-book" type="text" data-f="bookingUrl" placeholder="https://polishandpearl.com/book" autocomplete="off">
+        </div>
+        <div class="prow">
+          <div><label for="f-currency">Currency symbol</label></div>
+          <input id="f-currency" type="text" data-f="currency" maxlength="3" style="max-width:96px" placeholder="$">
+        </div>
+      </div>
+
+      <div class="pstep">
+        <div class="pstep-h"><span class="pnum">04</span>
+          <div><h2>Their service menu</h2>
+            <p>Verdict Core returns one of four keys and never a price. The salon owns the name, the
+              price, the length and the rebook interval. A salon that does not offer a rebuild points
+              that key at whatever it does offer — it cannot be deleted, or a routed client would have
+              nothing to book.</p></div>
+        </div>
+        <div data-services></div>
+      </div>
+
+      <div class="pstep pbuild">
+        <div class="pstep-h"><span class="pnum">05</span>
+          <div><h2>Build it</h2>
+            <p>Everything is assembled in this browser. Nothing is uploaded anywhere.</p></div>
+        </div>
+
+        <div class="pissues" data-issues hidden></div>
+
+        <div class="pdl">
+          <button class="btn btn-primary btn-lg" data-build-site>
+            <span data-build-label>Download the deployable site</span>
+          </button>
+          <button class="btn btn-ghost btn-lg" data-build-config>Download the config file only</button>
+        </div>
+
+        <div class="pnote" data-build-note>
+          The full build is the scanner, the console, the fonts and their branding — drag the folder
+          onto Cloudflare Pages and that salon is live. The config file is the same branding as a
+          single <code>tenant.js</code>, for a salon already running on our infrastructure.
+        </div>
+
+        <div class="plog" data-log hidden></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ PREVIEW ═══════════ -->
+    <aside class="ppreview">
+      <div class="pph">
+        <h2>Their scanner</h2>
+        <div class="segs" role="group" aria-label="Preview screen">
+          <button data-prev-screen="intro" aria-pressed="true">Start</button>
+          <button data-prev-screen="report">Report</button>
+          <button data-prev-screen="console">Console</button>
+        </div>
+      </div>
+      <div class="phoneframe" data-phone>
+        <iframe data-preview src="../scan/index.html?demo=0" title="Live preview of the salon's scanner"></iframe>
+      </div>
+      <p class="pphint">This is the real product, not a picture of it. Every field above lands here as
+        you type — show a salon their own build on the call, before anything is generated.</p>
+    </aside>
+
+  </main>
+</div>
+
+<script src="../assets/app/brand.js"></script>
+<script src="../assets/app/zip.js"></script>
+<script src="../assets/app/portal.js"></script>
+</body>
+</html>

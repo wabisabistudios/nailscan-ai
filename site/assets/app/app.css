@@ -1,0 +1,249 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAILSCAN APP — shared stylesheet for the scanner and the dashboard
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Deliberately self-contained: it declares its own tokens and loads its own
+   fonts rather than extending the marketing site's site.css. The scanner has
+   to be droppable onto a salon's own domain, inside their own page, without
+   dragging 69 KB of landing-page styles behind it.
+
+   Everything brand-owned is a custom property that brand.js writes at runtime.
+   Nothing below hard-codes the accent.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@font-face { font-family: "UI"; src: url("../fonts/geist-var.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Data"; src: url("../fonts/geist-mono-var.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Display"; src: url("../fonts/instrument-serif.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+:root {
+  color-scheme: only dark;
+
+  --bg:        #07080A;
+  --bg-2:      #0B0D10;
+  --panel:     #0F1216;
+  --panel-2:   #14181D;
+  --panel-3:   #191E24;
+
+  --line:      #1C2128;
+  --line-2:    #262D36;
+  --line-3:    #384250;
+  --nontext:   #5D6979;
+
+  --fg:        #F4F6F8;
+  --fg-2:      #C3CAD3;
+  --muted:     #8A939F;
+  --dim:       #7C8899;
+  /* 4.41:1 on the panel surface was a real AA failure across 17 labels — the
+     value was tuned against the darker marketing-page background. Lifted. */
+  --faint:     #93A0AE;
+
+  /* brand.js overwrites these four at boot; the values here are only a
+     flash-of-unbranded-content guard. */
+  --accent:      #FF5233;
+  --accent-hi:   #FF7454;
+  --accent-lo:   #C33A1F;
+  --accent-glow: rgba(255,82,51,.14);
+  --accent-line: rgba(255,82,51,.32);
+  --accent-wash: rgba(255,82,51,.07);
+  /* Black, not white. White on #FF5233 is 3.23:1 — a real AA failure, and the
+     exact one brand.js was changed to stop making at runtime by choosing the
+     label colour from measured contrast. The static fallback still shipped it,
+     which meant any screen that does not call Brand.apply (the provisioning
+     portal) failed on every primary button. Black on that orange is 6.10:1,
+     and it is what brand.js computes for the same hex. */
+  --on-accent:   #0A0B0D;
+
+  --ok:   #3ED598;
+  --warn: #F2B84B;
+
+  /* Chart palette. Validated with the dataviz validator against the panel
+     surface #0F1216 in dark mode: lightness band, chroma floor, adjacent CVD
+     separation, normal-vision floor and 3:1 contrast all PASS in this order.
+     The order is the colourblind-safety mechanism — do not reshuffle without
+     re-running scripts/validate_palette.js. */
+  --s1: #00A3C2;   /* cyan   */
+  --s2: #DC634C;   /* coral  */
+  --s3: #9975DE;   /* violet */
+  --s4: #B48500;   /* sand   */
+  --s5: #00A97A;   /* teal   */
+
+  /* Ordinal ramp for the funnel — one hue, monotone lightness, and the dark
+     end still clears 2:1 on the panel. Validated with --ordinal. */
+  --o1: #4FE7FF; --o2: #15C6E1; --o3: #00A6C0; --o4: #0087A0; --o5: #006B85;
+
+  --grid:   #1A1F26;
+  --axis:   #262D36;
+
+  --sans:    "UI", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono:    "Data", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --display: "Display", "Iowan Old Style", Georgia, serif;
+
+  --radius: 4px;
+  --radius-lg: 10px;
+  --ease:     cubic-bezier(.22,.61,.36,1);
+  --ease-out: cubic-bezier(.16,1,.3,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* The [hidden] attribute is a UA rule with almost no specificity, so ANY
+   component rule that sets display wins and the element stays on screen. This
+   has now bitten three times in this codebase — the demo bar, the closed
+   drawer, and worst of all the camera preview, where `.frame img { display:
+   block }` painted the sample specimen on top of a live camera that had been
+   running the whole time. Stated once, globally, so it cannot happen again. */
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 500; letter-spacing: -.015em; line-height: 1.15; }
+p { margin: 0; }
+button { font: inherit; color: inherit; }
+a { color: inherit; }
+
+.mono { font-family: var(--mono); font-size: .68rem; letter-spacing: .14em;
+        text-transform: uppercase; color: var(--dim); }
+
+/* Clipped rather than pushed to -9999px: an off-canvas offset registers as
+   horizontal overflow in layout audits and, in some browsers, as real scroll. */
+.skip {
+  position: absolute; left: 12px; top: 12px; z-index: 100;
+  clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden;
+  background: var(--accent); color: var(--on-accent); padding: 12px 18px; border-radius: var(--radius);
+}
+.skip:focus { clip-path: none; width: auto; height: auto; overflow: visible; }
+
+:where(a, button, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-hi); outline-offset: 2px; border-radius: 3px;
+}
+/* The screen machine moves focus to <main> on every transition so screen
+   readers announce the new screen. Chromium treats that programmatic focus as
+   :focus-visible and drew an accent box around the entire app on every step.
+   The skip link still lands here and still announces; it just does not glow. */
+#main:focus, #main:focus-visible { outline: none; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Brand lockup — the salon's mark, not ours. A monogram tile rather than an
+   uploaded logo, because a mockup that demands an asset per tenant cannot be
+   demoed in a meeting.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.lockup { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; }
+.lockup .mk {
+  width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center;
+  background: linear-gradient(150deg, var(--accent), var(--accent-lo));
+  color: var(--on-accent); font-family: var(--display); font-size: 1.15rem; line-height: 1;
+  box-shadow: 0 0 0 1px var(--accent-line), 0 6px 20px -8px var(--accent);
+  flex: none;
+}
+/* An uploaded logo replaces the tile outright. Keeping the gradient behind a
+   transparent PNG tints it, which is the fastest way to make a salon's own
+   mark look wrong on their own product. */
+.lockup .mk.has-logo {
+  background: none; box-shadow: none; border-radius: 6px; overflow: hidden;
+}
+.lockup .mk img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.lockup .nm { display: grid; line-height: 1.15; }
+.lockup .n1 { font-weight: 500; font-size: .96rem; letter-spacing: -.01em; }
+.lockup .n2 { font-family: var(--mono); font-size: .56rem; letter-spacing: .2em;
+              text-transform: uppercase; color: var(--faint); }
+
+.powered {
+  font-family: var(--mono); font-size: .54rem; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--faint);
+}
+.powered b { color: var(--dim); font-weight: 400; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Buttons
+   ───────────────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 22px; border-radius: var(--radius); border: 1px solid transparent;
+  font-size: .95rem; font-weight: 500; letter-spacing: -.005em;
+  cursor: pointer; text-decoration: none; background: none;
+  transition: background .18s var(--ease), border-color .18s var(--ease), transform .18s var(--ease);
+}
+.btn:disabled { opacity: .42; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: var(--on-accent); box-shadow: 0 10px 34px -16px var(--accent); }
+.btn-primary:not(:disabled):hover { background: var(--accent-hi); }
+.btn-ghost { border-color: var(--line-2); color: var(--fg); background: var(--panel); }
+.btn-ghost:not(:disabled):hover { border-color: var(--line-3); background: var(--panel-2); }
+.btn-quiet { color: var(--dim); padding: 10px 4px; }
+.btn-quiet:hover { color: var(--fg-2); }
+.btn-lg { padding: 17px 28px; font-size: 1rem; width: 100%; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Surfaces
+   ───────────────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg);
+}
+.card-pad { padding: clamp(18px, 2.4vw, 26px); }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: .58rem; letter-spacing: .13em; text-transform: uppercase;
+  padding: 4px 9px; border-radius: 3px; border: 1px solid var(--line-2); color: var(--dim);
+  white-space: nowrap;
+}
+.pill.ok   { color: var(--ok);   border-color: rgba(62,213,152,.32); }
+.pill.warn { color: var(--warn); border-color: rgba(242,184,75,.32); }
+.pill.acc  { color: var(--accent); border-color: var(--accent-line); }
+
+/* Status never travels on colour alone — every status pill carries a glyph.
+   Required by the accessibility pass, and it also survives a salon whose
+   accent happens to be green. */
+.pill.ok::before   { content: "\2713"; font-size: .7em; }
+.pill.warn::before { content: "\25CF"; font-size: .58em; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Field rows — the shared "record" primitive. Used by the scanner report,
+   the scan detail drawer and the client chart, so a reading looks identical
+   wherever it surfaces.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.rows { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.row {
+  display: grid; grid-template-columns: 108px 1fr auto; gap: 14px; align-items: center;
+  padding: 13px 15px; border-bottom: 1px solid var(--line); background: var(--panel);
+}
+.row:last-child { border-bottom: 0; }
+.row .k { font-family: var(--mono); font-size: .6rem; letter-spacing: .13em;
+          text-transform: uppercase; color: var(--faint); }
+.row .v { font-size: .88rem; color: var(--fg-2); min-width: 0; }
+@media (max-width: 560px) {
+  .row { grid-template-columns: 1fr auto; }
+  .row .k { grid-column: 1 / -1; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Reveal — one shared entrance. `.rv` starts hidden and is released by
+   .in; JS adds .in via IntersectionObserver or directly on screen change.
+   The no-JS guard lives in each page's <noscript>.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.rv { opacity: 0; transform: translateY(14px); }
+.rv.in { opacity: 1; transform: none; transition: opacity .62s var(--ease-out), transform .62s var(--ease-out); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rv, .rv.in { opacity: 1 !important; transform: none !important; transition: none !important; }
+  *, *::before, *::after {
+    animation-duration: .001ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important; scroll-behavior: auto !important;
+  }
+}
+/* build: portal-and-leads-20260802T1253 */

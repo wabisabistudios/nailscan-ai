@@ -1,0 +1,611 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCANNER — the client-facing capture, analysis and report
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Mobile-first and vertical, because every real scan happens one-handed on a
+   phone while the other hand is being photographed. The desktop view is the
+   same column centred, not a separate layout — a salon that embeds this in
+   an iframe gets one thing to reason about.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.scan-app {
+  min-height: 100dvh;
+  display: flex; flex-direction: column;
+  max-width: 520px; margin: 0 auto;
+  padding: 0 20px env(safe-area-inset-bottom);
+  position: relative;
+}
+
+/* Ambient wash in the salon's colour. One element, GPU-composited, no repaint. */
+.scan-app::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(90% 55% at 50% -8%, var(--accent-wash), transparent 70%),
+    radial-gradient(70% 40% at 50% 108%, rgba(88,213,232,.05), transparent 70%);
+}
+.scan-app > * { position: relative; z-index: 1; }
+
+.scan-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 0 12px; gap: 12px;
+}
+
+.scan-body { flex: 1; display: flex; flex-direction: column; padding-bottom: 28px; }
+
+.scan-foot {
+  padding: 16px 0 26px; display: flex; align-items: center; justify-content: center;
+  gap: 10px; border-top: 1px solid var(--line); margin-top: auto;
+}
+
+/* Screens are mutually exclusive; only the active one is in the a11y tree. */
+.screen { display: none; flex: 1; flex-direction: column; }
+.screen.on { display: flex; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   1 · INTRO
+   ───────────────────────────────────────────────────────────────────────── */
+
+.intro-art { position: relative; height: 210px; display: grid; place-items: center; margin: 6px 0 22px; }
+
+/* The aperture. Five blades, matching the mark and the five ONYX-5 fields.
+   Idles with a slow breathe so the screen is never dead, opens on Begin. */
+.aperture { width: 168px; height: 168px; }
+.aperture .bl {
+  fill: var(--accent); opacity: .82;
+  transform-box: fill-box; transform-origin: center;
+  animation: apr-breathe 5.2s var(--ease) infinite;
+}
+.aperture .bl:nth-child(2) { animation-delay: -.9s; }
+.aperture .bl:nth-child(3) { animation-delay: -1.8s; }
+.aperture .bl:nth-child(4) { animation-delay: -2.7s; }
+.aperture .bl:nth-child(5) { animation-delay: -3.6s; }
+@keyframes apr-breathe {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: .78; }
+  50%      { transform: scale(.93) rotate(4deg); opacity: 1; }
+}
+.aperture-ring {
+  position: absolute; width: 210px; height: 210px; border-radius: 50%;
+  border: 1px solid var(--accent-line);
+  animation: apr-pulse 3.4s var(--ease-out) infinite;
+}
+@keyframes apr-pulse {
+  0%   { transform: scale(.86); opacity: 0; }
+  35%  { opacity: .7; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
+
+.intro h1 { font-family: var(--display); font-size: clamp(2.1rem, 8vw, 2.9rem); line-height: 1.02; }
+.intro .lede { color: var(--fg-2); margin-top: 16px; font-size: 1.02rem; }
+
+.promises { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line);
+            border-radius: var(--radius); overflow: hidden; margin: 26px 0 22px; }
+.promise { background: var(--panel); padding: 13px 15px; display: flex; align-items: center; gap: 13px; }
+.promise b { font-family: var(--mono); font-size: .82rem; color: var(--accent); min-width: 34px; }
+.promise span { font-size: .88rem; color: var(--fg-2); }
+
+.consent { font-size: .74rem; color: var(--faint); line-height: 1.5; margin-top: 14px; text-align: center; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   2 · CAPTURE
+   ───────────────────────────────────────────────────────────────────────── */
+
+.frame {
+  position: relative; width: 100%; aspect-ratio: 4 / 5;
+  border-radius: var(--radius-lg); overflow: hidden;
+  background: var(--bg-2); border: 1px solid var(--line-2);
+}
+.frame video, .frame img, .frame canvas.shot {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.frame video { transform: scaleX(-1); }   /* front camera reads as a mirror */
+
+/* Corner brackets — the "hold it here" affordance, and the thing that makes
+   a web page read as an instrument rather than a file picker. */
+.brackets { position: absolute; inset: 16px; pointer-events: none; }
+.brackets i {
+  position: absolute; width: 26px; height: 26px;
+  border: 2px solid var(--accent); opacity: .85;
+  transition: inset .5s var(--ease-out), opacity .3s;
+}
+.brackets i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; border-radius: 4px 0 0 0; }
+.brackets i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; border-radius: 0 4px 0 0; }
+.brackets i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; border-radius: 0 0 0 4px; }
+.brackets i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; border-radius: 0 0 4px 0; }
+.frame.locked .brackets i { opacity: 1; animation: bk-lock .45s var(--ease-out); }
+@keyframes bk-lock { 0% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+/* Hand guide silhouette, drawn from the same point cloud idea as the site. */
+.guide { position: absolute; inset: 0; opacity: .5; pointer-events: none; }
+.guide circle { fill: var(--fg); }
+
+.shutter-flash {
+  position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none;
+}
+.shutter-flash.go { animation: flash .42s var(--ease-out); }
+@keyframes flash { 0% { opacity: 0; } 12% { opacity: .82; } 100% { opacity: 0; } }
+
+.checks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 0; }
+.check {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 10px 11px;
+}
+.check .cl { font-family: var(--mono); font-size: .54rem; letter-spacing: .14em;
+             text-transform: uppercase; color: var(--faint); }
+.check .cb { height: 3px; border-radius: 2px; background: var(--line-2); margin-top: 8px; overflow: hidden; }
+.check .cb i {
+  display: block; height: 100%; width: 0%; border-radius: 2px; background: var(--warn);
+  transition: width .5s var(--ease), background .4s var(--ease);
+}
+.check.pass .cb i { background: var(--ok); }
+.check.pass .cl { color: var(--ok); }
+
+.shutter {
+  width: 74px; height: 74px; border-radius: 50%; margin: 22px auto 0;
+  border: 2px solid var(--line-3); background: var(--panel-2);
+  display: grid; place-items: center; cursor: pointer;
+  transition: transform .16s var(--ease), border-color .3s;
+}
+.shutter i { width: 54px; height: 54px; border-radius: 50%; background: var(--accent); display: block;
+             transition: transform .16s var(--ease); }
+.shutter:not(:disabled):hover { border-color: var(--accent-line); }
+.shutter:not(:disabled):active i { transform: scale(.86); }
+.shutter:disabled { opacity: .4; cursor: not-allowed; }
+.shutter:disabled i { background: var(--nontext); }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   3 · ANALYSIS — the part that must not look basic
+   ───────────────────────────────────────────────────────────────────────── */
+
+.an-frame { position: relative; }
+
+/* The beam. Same idea as the homepage hero, run once top-to-bottom per pass
+   so it reads as a scan head travelling rather than a loading shimmer. */
+.beam {
+  position: absolute; left: 0; right: 0; height: 108px; pointer-events: none;
+  background: linear-gradient(180deg,
+    transparent 0%, var(--accent-wash) 34%, var(--accent-glow) 50%, var(--accent-wash) 66%, transparent 100%);
+  opacity: 0; top: -108px;
+}
+.beam::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1.5px;
+  background: linear-gradient(90deg, transparent, var(--accent-hi) 12%, var(--accent-hi) 88%, transparent);
+  box-shadow: 0 0 18px 2px var(--accent-glow);
+}
+.an-frame.scanning .beam { opacity: 1; animation: beam-run 2.6s var(--ease-io) infinite; }
+@keyframes beam-run { 0% { top: -12%; } 100% { top: 100%; } }
+
+/* Grid overlay — reads as measurement, costs one element. */
+.an-frame .mesh {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background-image:
+    linear-gradient(var(--accent-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent-line) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(70% 70% at 50% 45%, #000 30%, transparent 78%);
+  -webkit-mask-image: radial-gradient(70% 70% at 50% 45%, #000 30%, transparent 78%);
+  transition: opacity .7s var(--ease);
+}
+.an-frame.scanning .mesh { opacity: .5; }
+
+/* Nail landmarks. Each pops with a ring, then holds as a labelled marker. */
+.lm { position: absolute; width: 0; height: 0; pointer-events: none; }
+.lm b {
+  position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash);
+  transform: scale(0); transition: transform .42s var(--ease-out);
+}
+.lm i {
+  position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--accent); opacity: 0;
+}
+.lm.on b { transform: scale(1); }
+.lm.on i { animation: lm-ring .9s var(--ease-out); }
+@keyframes lm-ring { 0% { transform: scale(.3); opacity: .9; } 100% { transform: scale(1.15); opacity: 0; } }
+.lm s {
+  position: absolute; left: 14px; top: -9px; font-family: var(--mono); font-size: .5rem;
+  letter-spacing: .12em; color: var(--accent-hi); text-decoration: none; white-space: nowrap;
+  opacity: 0; transition: opacity .4s var(--ease) .2s;
+}
+.lm.on s { opacity: .9; }
+
+/* Stage list */
+.stages { margin-top: 18px; display: grid; gap: 1px; background: var(--line);
+          border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.stage {
+  background: var(--panel); padding: 11px 14px; display: grid;
+  grid-template-columns: 20px 1fr auto; gap: 12px; align-items: center;
+  opacity: .38; transition: opacity .4s var(--ease), background .4s var(--ease);
+}
+.stage .sm {
+  width: 16px; height: 16px; border-radius: 3px; border: 1px solid var(--line-3);
+  display: grid; place-items: center; font-size: .6rem; color: var(--nontext);
+}
+.stage .sn { font-size: .84rem; color: var(--fg-2); }
+.stage .ss { font-family: var(--mono); font-size: .54rem; letter-spacing: .13em;
+             text-transform: uppercase; color: var(--faint); }
+.stage.run { opacity: 1; background: var(--panel-2); }
+.stage.run .sm { border-color: var(--accent-line); color: var(--accent); animation: sm-spin 1s linear infinite; }
+@keyframes sm-spin { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }
+.stage.done { opacity: 1; }
+.stage.done .sm { border-color: rgba(62,213,152,.4); color: var(--ok); animation: none; }
+.stage.done .ss { color: var(--ok); }
+
+/* Confidence dial */
+.dial-wrap { display: flex; align-items: center; gap: 18px; margin-top: 18px;
+             padding: 16px; background: var(--panel); border: 1px solid var(--line);
+             border-radius: var(--radius); }
+.dial { width: 74px; height: 74px; flex: none; transform: rotate(-90deg); }
+.dial .trk { fill: none; stroke: var(--line-2); stroke-width: 5; }
+.dial .val { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round;
+             transition: stroke-dashoffset 1.5s var(--ease-out); }
+.dial-n { font-family: var(--mono); font-size: 1.5rem; color: var(--fg); line-height: 1; }
+.dial-l { font-size: .8rem; color: var(--dim); margin-top: 5px; }
+
+/* Readings typing in */
+.read-out { margin-top: 18px; }
+.read-row { opacity: 0; transform: translateY(8px); }
+.read-row.in { opacity: 1; transform: none; transition: opacity .45s var(--ease-out), transform .45s var(--ease-out); }
+.caret { display: inline-block; width: 7px; height: 1em; vertical-align: -2px;
+         background: var(--accent); margin-left: 2px; animation: caret 1s steps(2) infinite; }
+@keyframes caret { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   4 · REPORT
+   ───────────────────────────────────────────────────────────────────────── */
+
+.rep-top { text-align: center; padding: 4px 0 24px; }
+.rep-top h2 { font-family: var(--display); font-size: clamp(1.9rem, 7vw, 2.4rem); margin-top: 12px; }
+.rep-date { font-family: var(--mono); font-size: .6rem; letter-spacing: .16em;
+            text-transform: uppercase; color: var(--faint); margin-top: 10px; }
+
+.sec-lbl { font-family: var(--mono); font-size: .58rem; letter-spacing: .17em;
+           text-transform: uppercase; color: var(--faint); margin: 26px 0 11px; }
+
+.offer {
+  border: 1px solid var(--accent-line); border-radius: var(--radius);
+  background: var(--accent-wash); padding: 17px 18px;
+}
+.offer .ok2 { font-family: var(--mono); font-size: .56rem; letter-spacing: .15em;
+              text-transform: uppercase; color: var(--accent); }
+.offer .on2 { font-size: 1.28rem; font-weight: 500; margin-top: 8px; letter-spacing: -.015em; }
+.offer .op2 { font-family: var(--mono); font-size: 1.6rem; color: var(--fg); margin-top: 2px; }
+.offer p { font-size: .87rem; color: var(--fg-2); margin-top: 11px; line-height: 1.55; }
+.offer .meta { display: flex; gap: 16px; margin-top: 13px; flex-wrap: wrap; }
+
+.plan { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line);
+        border-radius: var(--radius); overflow: hidden; }
+.wk { background: var(--panel); padding: 13px 15px; display: grid;
+      grid-template-columns: 62px 1fr; gap: 14px; align-items: start; }
+.wk .w { font-family: var(--mono); font-size: .62rem; letter-spacing: .1em; color: var(--accent); padding-top: 2px; }
+.wk .t { font-size: .87rem; color: var(--fg-2); }
+
+.fineprint { font-size: .72rem; color: var(--faint); text-align: center; margin-top: 16px; line-height: 1.55; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   5 · CONTACT
+   ───────────────────────────────────────────────────────────────────────── */
+
+.field { display: block; margin-bottom: 15px; }
+.field span { display: block; font-family: var(--mono); font-size: .56rem; letter-spacing: .15em;
+              text-transform: uppercase; color: var(--faint); margin-bottom: 7px; }
+.field input {
+  width: 100%; padding: 14px 15px; font-size: 1rem; font-family: inherit;
+  background: var(--panel-2); border: 1px solid var(--line-2); border-radius: var(--radius);
+  color: var(--fg);
+}
+.field input::placeholder { color: var(--faint); }
+.field input:focus { border-color: var(--accent-line); outline: none;
+                     box-shadow: 0 0 0 3px var(--accent-wash); }
+
+.done-art { display: grid; place-items: center; padding: 30px 0 18px; }
+.tick { width: 74px; height: 74px; }
+.tick circle { fill: none; stroke: var(--ok); stroke-width: 3; opacity: .3; }
+.tick path { fill: none; stroke: var(--ok); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;
+             stroke-dasharray: 42; stroke-dashoffset: 42; animation: tick-in .6s var(--ease-out) .15s forwards; }
+@keyframes tick-in { to { stroke-dashoffset: 0; } }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Demo affordances — visible in the mockup, removed on a real deployment.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* [hidden] is a UA rule with almost no specificity, so `display:flex` below
+   beat it and the demo bar showed inside the settings preview iframe even with
+   ?demo=0. Restate it. */
+.demobar[hidden] { display: none; }
+.demobar {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: 14px; z-index: 40;
+  display: flex; align-items: center; gap: 6px; padding: 7px 8px;
+  background: rgba(15,18,22,.94); border: 1px solid var(--line-2); border-radius: 999px;
+  backdrop-filter: blur(10px); box-shadow: 0 14px 40px -18px #000;
+}
+.demobar .dl { font-family: var(--mono); font-size: .5rem; letter-spacing: .16em;
+               text-transform: uppercase; color: var(--faint); padding: 0 8px 0 6px; }
+.demobar button {
+  border: 1px solid var(--line-2); background: none; color: var(--dim); cursor: pointer;
+  font-family: var(--mono); font-size: .56rem; letter-spacing: .1em; text-transform: uppercase;
+  padding: 6px 11px; border-radius: 999px; display: flex; align-items: center; gap: 6px;
+}
+.demobar button i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.demobar button[aria-pressed="true"] { color: var(--fg); border-color: var(--line-3); background: var(--panel-2); }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   REPORT · MEASUREMENTS, SHAPE, COLOUR
+   The three sections that turn a status readout into something worth
+   keeping. Everything here is descriptive — no section names a condition.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.spec { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line);
+        border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.spec div { background: var(--panel); padding: 13px 14px; }
+.spec .sk { font-family: var(--mono); font-size: .53rem; letter-spacing: .14em;
+            text-transform: uppercase; color: var(--faint); }
+.spec .sv { font-family: var(--mono); font-size: 1.02rem; color: var(--fg); margin-top: 6px; }
+.spec .su { font-size: .7rem; color: var(--dim); margin-top: 3px; }
+
+/* The measured plate, drawn to its own numbers. */
+.platefig { display: flex; align-items: center; gap: 18px; padding: 16px;
+            background: var(--panel); border: 1px solid var(--line);
+            border-radius: var(--radius); margin-top: 10px; }
+.platefig .pf { width: 74px; flex: none; }
+.platefig p { font-size: .8rem; color: var(--dim); line-height: 1.5; }
+
+/* Shape recommendation */
+.shapehero {
+  display: flex; gap: 18px; align-items: flex-start; padding: 18px;
+  border: 1px solid var(--accent-line); border-radius: var(--radius);
+  background: var(--accent-wash);
+}
+.shapehero .big { width: 78px; flex: none; }
+.shapehero .sn2 { font-size: 1.24rem; font-weight: 500; letter-spacing: -.015em; }
+.shapehero .sl2 { font-family: var(--mono); font-size: .55rem; letter-spacing: .15em;
+                  text-transform: uppercase; color: var(--accent); }
+.shapehero p { font-size: .85rem; color: var(--fg-2); margin-top: 9px; line-height: 1.55; }
+
+.alts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.alt { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+       padding: 12px 10px; text-align: center; }
+.alt .av { width: 40px; margin: 0 auto 8px; }
+.alt .an2 { font-size: .8rem; color: var(--fg-2); }
+.alt .as { font-family: var(--mono); font-size: .58rem; color: var(--faint); margin-top: 3px; }
+.alt .bar { height: 3px; border-radius: 2px; background: var(--line-2); margin-top: 8px; overflow: hidden; }
+.alt .bar i { display: block; height: 100%; background: var(--nontext); border-radius: 2px; }
+
+/* Colour matching */
+.tonecard { display: flex; align-items: center; gap: 15px; padding: 15px 16px;
+            background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.tonecard .chip { width: 50px; height: 50px; border-radius: 10px; flex: none;
+                  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+.tonecard .tt { font-size: .95rem; }
+.tonecard .tm { font-size: .76rem; color: var(--dim); margin-top: 4px; }
+
+.swatches-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.sw { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 10px; text-align: center; }
+.sw .dot { width: 100%; aspect-ratio: 1; border-radius: 8px; margin-bottom: 8px;
+           box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+.sw .swn { font-size: .74rem; color: var(--fg-2); line-height: 1.3; }
+.sw .swh { font-family: var(--mono); font-size: .54rem; color: var(--faint); margin-top: 3px; }
+
+.nudecard { display: flex; align-items: center; gap: 15px; margin-top: 10px; padding: 15px 16px;
+            background: var(--panel-2); border: 1px solid var(--line-2); border-radius: var(--radius); }
+.nudecard .nd { width: 54px; height: 54px; border-radius: 10px; flex: none;
+                box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+.nudecard .nn { font-size: .95rem; }
+.nudecard .nm2 { font-size: .76rem; color: var(--dim); margin-top: 4px; line-height: 1.45; }
+.nudecard .nh { font-family: var(--mono); font-size: .6rem; color: var(--faint); margin-top: 4px; }
+
+@media (max-width: 380px) {
+  .spec { grid-template-columns: 1fr; }
+  .swatches-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   THE VERDICT CARD
+
+   Everything the report exists to say, above the fold: her shape, her colour,
+   her service, the price, and the button. The measured detail underneath is
+   what she scrolls for if she wants it — it is no longer what she has to
+   scroll THROUGH. The book button used to sit 3.2 screens down.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.verdict-card {
+  border: 1px solid var(--accent-line); border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--accent-wash), transparent 62%), var(--panel);
+  padding: 22px 20px 20px; margin-top: 4px;
+}
+.vc-top { display: flex; gap: 20px; align-items: center; }
+.vc-nail { width: 76px; flex: none; }
+.vc-nail svg path { transition: fill .45s var(--ease); }
+.vc-l { font-family: var(--mono); font-size: .55rem; letter-spacing: .16em;
+        text-transform: uppercase; color: var(--accent); }
+.vc-h { font-family: var(--display); font-weight: 400; font-size: clamp(1.7rem, 7vw, 2.15rem);
+        line-height: 1.06; margin-top: 7px; }
+.vc-h em { font-style: normal; color: var(--accent); }
+.vc-sub { font-size: .88rem; color: var(--fg-2); margin-top: 8px; }
+
+.vc-facts { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+.vc-facts span {
+  font-family: var(--mono); font-size: .62rem; letter-spacing: .1em;
+  padding: 7px 11px; border-radius: 3px; border: 1px solid var(--line-2); color: var(--fg-2);
+}
+.vc-facts span b { color: var(--fg); font-weight: 500; }
+
+/* Tap a colour to see the shape wearing it. The cheapest possible way to make
+   a static report feel like it belongs to her. */
+.vc-colours { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.vc-col {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 999px;
+  padding: 7px 13px 7px 8px; font-size: .78rem; color: var(--fg-2);
+}
+.vc-col i { width: 16px; height: 16px; border-radius: 50%; flex: none;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); }
+.vc-col[aria-pressed="true"] { border-color: var(--accent); color: var(--fg); background: var(--accent-wash); }
+
+.vc-cta { margin-top: 20px; }
+.vc-fine { font-size: .7rem; color: var(--faint); text-align: center; margin-top: 11px; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   THE RECORD
+
+   "Six visits later, that is a history. The record is the asset." The site
+   argues it on three pages; the client's own report used to say nothing about
+   her last visit at all. Deliberately quieter than the verdict card — this is
+   context under the answer, not a second answer competing with it.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.histcard { border: 1px solid var(--line); border-radius: var(--radius);
+            background: var(--panel); padding: 16px; }
+.hh { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.hn { font-family: var(--mono); font-size: .58rem; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--accent);
+      border: 1px solid var(--accent-line); border-radius: 3px; padding: 4px 8px; flex: none; }
+.hl { font-size: .95rem; color: var(--fg); }
+.histcard > p { font-size: .86rem; line-height: 1.6; color: var(--fg-2); margin-top: 12px; }
+.histcard > p b { color: var(--fg); font-weight: 500; }
+
+.hfacts { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.hfacts span { font-family: var(--mono); font-size: .6rem; letter-spacing: .1em;
+               padding: 6px 10px; border-radius: 3px; border: 1px solid var(--line-2);
+               color: var(--faint); }
+.hfacts b { color: var(--fg-2); font-weight: 500; }
+
+/* The record itself, folded away. Five rows with a consequence line each ran
+   970 px — taller than everything above it, for context that belongs under
+   the answer rather than in front of it. */
+.hmore { margin-top: 14px; border-top: 1px solid var(--line); }
+.hmore > summary { list-style: none; cursor: pointer; padding: 12px 0 0;
+                   font-size: .8rem; color: var(--faint);
+                   display: flex; align-items: center; gap: 8px; }
+.hmore > summary::-webkit-details-marker { display: none; }
+.hmore > summary::after {
+  content: ""; width: 6px; height: 6px; flex: none;
+  border-right: 1.5px solid var(--dim); border-bottom: 1.5px solid var(--dim);
+  transform: rotate(45deg) translate(-1px, -1px); transition: transform .25s var(--ease);
+}
+.hmore[open] > summary::after { transform: rotate(225deg) translate(-1px, -1px); }
+
+.hrow { padding: 13px 0; border-bottom: 1px solid var(--line); }
+.hrow:last-child { border-bottom: 0; padding-bottom: 0; }
+.hk { font-family: var(--mono); font-size: .58rem; letter-spacing: .13em;
+      text-transform: uppercase; color: var(--faint); }
+.hv { font-size: .98rem; color: var(--fg); margin-top: 6px; overflow-wrap: anywhere; }
+.hw { font-size: .82rem; line-height: 1.55; color: var(--fg-2); margin-top: 5px; }
+
+/* Reports sent by link and email — the link half. */
+.sharebar { display: flex; gap: 8px; flex-wrap: wrap; }
+/* btn-quiet alone rendered these as two floating words. They are the only
+   route to the "reports sent by link" promise, so they have to read as
+   controls — quieter than Book this in, but unmistakably tappable. */
+.sharebar .share-b {
+  flex: 1 1 0; min-width: 0; padding: 13px 12px;
+  border: 1px solid var(--line-2); border-radius: var(--radius);
+  background: var(--panel); color: var(--fg-2); font-size: .88rem;
+  transition: border-color .25s var(--ease), color .25s var(--ease);
+}
+.sharebar .share-b:hover { border-color: var(--accent-line); color: var(--fg); }
+.share-n { flex: 1 0 100%; font-size: .76rem; line-height: 1.5;
+           color: var(--faint); margin-top: 10px; }
+.sharednote { font-size: .78rem; line-height: 1.5; color: var(--faint); margin-top: 8px; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Disclosures. Native <details> — no JS, keyboard and screen-reader correct
+   for free, and the browser handles the open state on back-navigation.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.disc { border: 1px solid var(--line); border-radius: var(--radius);
+        background: var(--panel); margin-top: 8px; overflow: hidden; }
+.disc > summary {
+  list-style: none; cursor: pointer; padding: 15px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  font-size: .92rem; color: var(--fg);
+}
+.disc > summary::-webkit-details-marker { display: none; }
+.disc > summary .dq { font-size: .74rem; color: var(--faint); }
+.disc > summary::after {
+  content: ""; width: 8px; height: 8px; flex: none;
+  border-right: 1.6px solid var(--dim); border-bottom: 1.6px solid var(--dim);
+  transform: rotate(45deg) translate(-2px, -2px); transition: transform .25s var(--ease);
+}
+.disc[open] > summary::after { transform: rotate(225deg) translate(-2px, -2px); }
+.disc[open] > summary { border-bottom: 1px solid var(--line); }
+.disc .disc-b { padding: 16px; }
+.disc .disc-b > :first-child { margin-top: 0; }
+
+/* Measurement rows carry their own consequence line. */
+.mrow { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.mrow:last-child { border-bottom: 0; padding-bottom: 0; }
+.mrow:first-child { padding-top: 0; }
+.mrow .mh { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.mrow .mk2 { font-family: var(--mono); font-size: .54rem; letter-spacing: .14em;
+             text-transform: uppercase; color: var(--faint); }
+.mrow .mv { font-family: var(--mono); font-size: 1.02rem; color: var(--fg); }
+.mrow .mw { font-size: .82rem; color: var(--fg-2); margin-top: 7px; line-height: 1.5; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   The gate stopping. Not an error state — the product is arguing that this
+   is the correct behaviour, so it is styled as a considered decision.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.retake {
+  border: 1px solid rgba(242,184,75,.34); border-radius: var(--radius);
+  background: rgba(242,184,75,.05); padding: 18px;
+}
+.retake .rt-h { font-family: var(--display); font-size: 1.5rem; color: var(--warn); }
+.retake p { font-size: .87rem; color: var(--fg-2); margin-top: 10px; line-height: 1.55; }
+.retake p b { font-family: var(--mono); color: var(--fg); }
+.retake .rt-l { margin: 14px 0 18px; padding: 0; list-style: none; display: grid; gap: 9px; }
+.retake .rt-l li {
+  font-size: .85rem; color: var(--fg-2); padding-left: 22px; position: relative; line-height: 1.5;
+}
+.retake .rt-l li::before {
+  content: "→"; position: absolute; left: 0; color: var(--warn); font-family: var(--mono);
+}
+
+.stage.halt { opacity: 1; background: rgba(242,184,75,.06); }
+.stage.halt .sm { border-color: rgba(242,184,75,.45); color: var(--warn); animation: none; }
+.stage.halt .ss { color: var(--warn); }
+
+/* Marks the one stage that is not yet a measurement. */
+.tagsim {
+  font-family: var(--mono); font-size: .48rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--faint); border: 1px solid var(--line-2); border-radius: 2px;
+  padding: 2px 5px; margin-left: 7px; vertical-align: 1px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Live plate tracking.
+
+   Marks that sit on the guide are marks that sit where we TOLD her to put her
+   nails. These sit on her actual plates, found from the silhouette every
+   frame — which is the difference between an overlay and an instrument.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.tips { position: absolute; inset: 0; pointer-events: none; }
+.tips i {
+  position: absolute; width: 26px; height: 30px; margin: -15px 0 0 -13px;
+  border: 1.5px solid var(--accent); border-radius: 50% 50% 46% 46%;
+  box-shadow: 0 0 12px var(--accent-glow), inset 0 0 8px var(--accent-wash);
+  transition: left .12s linear, top .12s linear, opacity .25s var(--ease);
+}
+.tips i::after {
+  content: attr(data-n); position: absolute; left: 50%; top: -15px;
+  transform: translateX(-50%);
+  font-family: var(--mono); font-size: .46rem; letter-spacing: .1em; color: var(--accent-hi);
+}
+
+/* The guide fades once we are tracking her real hand — leaving both on screen
+   reads as two competing sets of instructions. */
+.frame.tracking .guide { opacity: .12; transition: opacity .5s var(--ease); }
+
+.platecount {
+  font-family: var(--mono); font-size: .54rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ok); margin-top: 10px; text-align: center;
+}
+.platecount.low { color: var(--warn); }
+
+.mrow .mreg {
+  font-family: var(--mono); font-size: .5rem; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--faint); margin-top: 8px;
+}

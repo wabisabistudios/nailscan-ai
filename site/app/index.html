@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Console — NailScan</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#07080A">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/geist-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/geist-mono-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/app/app.css">
+<link rel="stylesheet" href="../assets/app/dashboard.css">
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="app">
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+  <aside class="side">
+    <div class="side-top">
+      <span class="lockup">
+        <span class="mk" data-brand-monogram aria-hidden="true">L</span>
+        <span class="nm">
+          <span class="n1" data-brand-name>Lumière Nail Studio</span>
+          <span class="n2">Console</span>
+        </span>
+      </span>
+    </div>
+
+    <nav aria-label="Sections">
+      <button class="navlink" data-view="overview" aria-current="page">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1"/><rect x="9" y="1.5" width="5.5" height="5.5" rx="1"/>
+          <rect x="1.5" y="9" width="5.5" height="5.5" rx="1"/><rect x="9" y="9" width="5.5" height="5.5" rx="1"/></svg>
+        Overview</button>
+      <!-- Leads sits above Clients on purpose. Clients is a record; Leads is
+           the queue, and the queue is what an owner opens the console for. -->
+      <button class="navlink" data-view="leads">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <path d="M1.8 4.4h12.4v8.2H1.8z" rx="1"/><path d="M1.8 4.9 8 9.3l6.2-4.4"/></svg>
+        Leads<span class="navpip" data-lead-pip hidden>0</span></button>
+      <button class="navlink" data-view="clients">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <circle cx="6" cy="5" r="2.6"/><path d="M1.6 14c0-2.6 2-4.2 4.4-4.2s4.4 1.6 4.4 4.2"/>
+          <path d="M11 3.2a2.4 2.4 0 0 1 0 4.6M12.4 9.9c1.3.5 2 1.9 2 3.6"/></svg>
+        Clients</button>
+      <button class="navlink" data-view="scans">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <rect x="1.6" y="2.6" width="12.8" height="10.8" rx="1.6"/><path d="M1.6 8h12.8"/><path d="M5.6 2.6v10.8"/></svg>
+        Scans</button>
+      <button class="navlink" data-view="settings">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <circle cx="8" cy="8" r="2.4"/>
+          <path d="M8 1.4v1.8M8 12.8v1.8M14.6 8h-1.8M3.2 8H1.4M12.7 3.3l-1.3 1.3M4.6 11.4l-1.3 1.3M12.7 12.7l-1.3-1.3M4.6 4.6L3.3 3.3"/></svg>
+        Branding</button>
+    </nav>
+
+    <div class="side-foot">
+      <div class="powered">Powered by <b>NailScan</b></div>
+      <div class="powered" style="margin-top:6px">Ledger · <span data-ledger-count>0</span> records</div>
+    </div>
+  </aside>
+
+  <!-- ═══════════════ CONTENT ═══════════════ -->
+  <div class="content">
+    <header class="topbar">
+      <div>
+        <h1 data-title>Overview</h1>
+        <div class="sub" data-subtitle>Every scan, every client, every booking.</div>
+      </div>
+      <div class="range" role="group" aria-label="Date range">
+        <button data-range="7">7 days</button>
+        <button data-range="30" aria-pressed="true">30 days</button>
+        <button data-range="90">90 days</button>
+        <button data-range="0">All</button>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+
+      <!-- ─────────── OVERVIEW ─────────── -->
+      <section class="view on" data-view-panel="overview" aria-label="Overview">
+        <div class="tiles" data-tiles></div>
+
+        <div class="grid2">
+          <div class="panel-c">
+            <div class="panel-h">
+              <div>
+                <h2>Scans and bookings</h2>
+                <div class="hint">Both are counts, so they share one axis.</div>
+              </div>
+              <div class="legend">
+                <span><i style="background:var(--s1)"></i>Scans</span>
+                <span><i style="background:var(--s2)"></i>Booked</span>
+              </div>
+            </div>
+            <div data-chart-trend></div>
+          </div>
+
+          <div class="panel-c">
+            <div class="panel-h"><h2>Scan to chair</h2>
+              <span class="hint">of all scans</span></div>
+            <div data-chart-funnel></div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="panel-c">
+            <div class="panel-h"><h2>Where the scans come from</h2></div>
+            <div class="tablewrap" data-source-table></div>
+          </div>
+
+          <div class="panel-c">
+            <div class="panel-h"><h2>Service mix</h2>
+              <span class="hint">routed by Verdict Core</span></div>
+            <div data-chart-services></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── LEADS ─────────── -->
+      <section class="view" data-view-panel="leads" aria-label="Leads">
+        <div class="tiles" data-lead-tiles></div>
+
+        <div class="searchbar">
+          <div class="segs" role="group" aria-label="Filter leads">
+            <button data-lead-filter="todo" aria-pressed="true">Needs a call</button>
+            <button data-lead-filter="chasing">Called, not booked</button>
+            <button data-lead-filter="booked">Booked</button>
+            <button data-lead-filter="all">Everyone</button>
+          </div>
+          <input type="search" data-lead-search placeholder="Search by name or phone…" aria-label="Search leads">
+          <span class="pill" data-lead-count>0 leads</span>
+          <button class="btn btn-ghost" style="padding:10px 16px" data-lead-export>Export CSV</button>
+        </div>
+
+        <div data-lead-list></div>
+      </section>
+
+      <!-- ─────────── CLIENTS ─────────── -->
+      <section class="view" data-view-panel="clients" aria-label="Clients">
+        <div class="searchbar">
+          <input type="search" data-client-search placeholder="Search by name or phone…" aria-label="Search clients">
+          <span class="pill" data-client-count>0 clients</span>
+          <button class="btn btn-ghost" style="padding:10px 16px" data-export>Export CSV</button>
+        </div>
+        <div class="panel-c">
+          <div class="tablewrap" data-client-table></div>
+        </div>
+      </section>
+
+      <!-- ─────────── SCANS ─────────── -->
+      <section class="view" data-view-panel="scans" aria-label="Scans">
+        <div class="searchbar">
+          <input type="search" data-scan-search placeholder="Search by report ID or client…" aria-label="Search scans">
+          <span class="pill" data-scan-count>0 scans</span>
+        </div>
+        <div class="panel-c">
+          <div class="tablewrap" data-scan-table></div>
+        </div>
+      </section>
+
+      <!-- ─────────── BRANDING ─────────── -->
+      <section class="view" data-view-panel="settings" aria-label="Branding">
+        <div class="setgrid">
+          <div class="panel-c">
+            <div class="panel-h">
+              <div>
+                <h2>Your branding</h2>
+                <div class="hint">Everything on the right updates as you type. Nothing is rebuilt.</div>
+              </div>
+            </div>
+
+            <div class="setrow">
+              <div><label for="set-name">Salon name</label>
+                <div class="desc">Shown on the scanner and on every report.</div></div>
+              <input id="set-name" type="text" data-set="name">
+            </div>
+
+            <div class="setrow">
+              <div><label>Your logo</label>
+                <div class="desc">PNG or SVG, transparent background. Replaces the monogram
+                  everywhere at once.</div></div>
+              <div>
+                <label class="dropzone" data-logo-zone>
+                  <span class="dz-prev" data-logo-prev></span>
+                  <span>
+                    <span class="dz-t" data-logo-t>Drop a logo, or click to choose</span>
+                    <span class="dz-s">Square works best · up to 512 KB</span>
+                  </span>
+                  <input type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" data-logo-input>
+                </label>
+                <button class="linkbtn" data-logo-clear hidden style="margin-top:9px">Remove logo</button>
+              </div>
+            </div>
+
+            <div class="setrow">
+              <div><label for="set-mono">Monogram</label>
+                <div class="desc">The fallback when there is no logo — on a share card, or
+                  before the image loads.</div></div>
+              <input id="set-mono" type="text" maxlength="2" data-set="monogram" style="max-width:80px">
+            </div>
+
+            <div class="setrow">
+              <div><label for="set-hex">Accent colour</label>
+                <div class="desc">Every hover, glow, focus ring and button derives from this
+                  one value. The label colour is picked automatically for contrast.</div></div>
+              <div>
+                <div class="pickrow">
+                  <input class="colorwell" type="color" data-color-well aria-label="Pick accent colour">
+                  <input class="hexfield" id="set-hex" type="text" maxlength="7"
+                         spellcheck="false" data-hex placeholder="#FF5233">
+                  <span class="pill" data-contrast-note></span>
+                </div>
+                <div class="swatches" data-swatches style="margin-top:11px"></div>
+              </div>
+            </div>
+
+            <div class="setrow">
+              <div><label>Typeface</label>
+                <div class="desc">Nothing here calls out to a font CDN. Upload a .woff2 to use
+                  your own.</div></div>
+              <div>
+                <div class="fontpick" data-fontpick></div>
+                <label class="dropzone" data-font-zone style="margin-top:9px">
+                  <span class="dz-prev" style="font-family:var(--display);font-size:1.2rem" data-font-prev>Aa</span>
+                  <span>
+                    <span class="dz-t" data-font-t>Upload a font file</span>
+                    <span class="dz-s">.woff2, .woff, .ttf or .otf · up to 2 MB</span>
+                  </span>
+                  <input type="file" accept=".woff2,.woff,.ttf,.otf,font/woff2,font/woff" data-font-input>
+                </label>
+              </div>
+            </div>
+
+            <div class="setrow">
+              <div><label for="set-phone">Phone</label>
+                <div class="desc">Where the report tells her to call.</div></div>
+              <input id="set-phone" type="text" data-set="phone">
+            </div>
+
+            <div class="panel-h" style="margin:26px 0 4px"><h2>Your service menu</h2>
+              <span class="hint">Verdict Core returns a key. You own the name and the price.</span></div>
+            <div data-service-editor></div>
+
+            <div data-tenant-block>
+              <div class="panel-h" style="margin:26px 0 4px"><h2>Switch tenant</h2>
+                <span class="hint">Demo only — proves the whole console is white-label.</span></div>
+              <div class="swatches" data-tenants style="gap:10px"></div>
+            </div>
+          </div>
+
+          <div class="preview">
+            <div class="panel-h" style="margin-bottom:12px">
+              <h2 style="font-size:.9rem">Live scanner</h2>
+              <a class="hint" href="../scan/index.html" target="_blank" rel="noopener">Open full size ↗</a>
+            </div>
+            <div class="phoneframe">
+              <iframe data-preview title="Live preview of the client scanner"
+                      src="../scan/index.html?demo=0" loading="lazy"></iframe>
+            </div>
+            <p class="hint" style="margin-top:12px">This is the real scanner, not a picture of it.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Detail drawer, shared by clients and scans -->
+<div class="scrim" data-scrim></div>
+<div class="drawer" data-drawer role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden>
+  <div class="drawer-h">
+    <div>
+      <div class="mono" data-drawer-kind>Client</div>
+      <h2 id="drawer-title" data-drawer-title style="margin-top:5px">—</h2>
+      <div class="hint" data-drawer-sub style="font-size:.8rem;color:var(--dim);margin-top:4px"></div>
+    </div>
+    <button class="xbtn" data-drawer-close aria-label="Close">✕</button>
+  </div>
+  <div class="drawer-b" data-drawer-body></div>
+</div>
+
+<noscript>
+  <div style="padding:32px;max-width:640px">
+    <h1 style="font-size:1.4rem">The console needs JavaScript</h1>
+    <p style="color:#C3CAD3;margin-top:12px">It renders your ledger in the browser. Turn JavaScript on for this page.</p>
+  </div>
+</noscript>
+
+<!-- tenant.js is empty in the reference build and rewritten by the
+     provisioning portal. It is the only file a salon's own build differs by. -->
+<script src="../assets/app/tenant.js"></script>
+<script src="../assets/app/brand.js"></script>
+<script src="../assets/app/data.js"></script>
+<script src="../assets/app/charts.js"></script>
+<!-- The console issues report links off the ledger, so it needs the same
+     codec the scanner writes them with. -->
+<script src="../assets/app/report.js"></script>
+<script src="../assets/app/dashboard.js"></script>
+</body>
+</html>

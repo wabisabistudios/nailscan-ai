@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nail assessment</title>
+<meta name="description" content="One photo of your own hand. A real assessment of your own nails, and the service they are ready for.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#07080A">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/geist-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/instrument-serif.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/geist-mono-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/app/app.css">
+<link rel="stylesheet" href="../assets/app/scanner.css">
+<script>document.documentElement.className = 'js';</script>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="scan-app">
+
+  <header class="scan-head">
+    <span class="lockup">
+      <span class="mk" data-brand-monogram aria-hidden="true">L</span>
+      <span class="nm">
+        <span class="n1" data-brand-name>Lumière Nail Studio</span>
+        <span class="n2">Nail assessment</span>
+      </span>
+    </span>
+    <span class="pill" data-step-pill>Step 1 of 4</span>
+  </header>
+
+  <main id="main" class="scan-body" tabindex="-1">
+
+    <!-- ═════════════ 1 · INTRO ═════════════ -->
+    <section class="screen on intro" data-screen="intro" aria-label="Start your assessment">
+      <div class="intro-art" aria-hidden="true">
+        <span class="aperture-ring"></span>
+        <svg class="aperture" viewBox="0 0 200 200" data-aperture>
+          <g data-blades></g>
+        </svg>
+      </div>
+
+      <h1>Let's see what your nails are ready for.</h1>
+      <p class="lede">One photo of the back of your hand. You'll get a real assessment of your own nails and the service that suits them — in under a minute.</p>
+
+      <div class="promises">
+        <div class="promise"><b>01</b><span>Hold your hand flat, nails toward the camera</span></div>
+        <div class="promise"><b>02</b><span>Daylight if you have it — we'll tell you if it isn't enough</span></div>
+        <div class="promise"><b>03</b><span>One photo. Nothing to download, no account</span></div>
+      </div>
+
+      <button class="btn btn-primary btn-lg" data-go="capture">Start my assessment</button>
+      <p class="consent">Your photo is used to produce this assessment and is stored with your record at <span data-brand-name>Lumière Nail Studio</span>. Describes what is visible in a photograph. Not a medical diagnosis.</p>
+    </section>
+
+    <!-- ═════════════ 2 · CAPTURE ═════════════ -->
+    <section class="screen" data-screen="capture" aria-label="Take your photo">
+      <p class="mono" style="margin-bottom:12px">Position · back of the hand</p>
+
+      <div class="frame" data-frame>
+        <video data-video playsinline muted autoplay hidden></video>
+        <img data-still src="../assets/app/img/specimen.jpg" alt="" hidden>
+        <svg class="guide" data-guide viewBox="0 0 100 125" aria-hidden="true"></svg>
+        <div class="tips" data-tips aria-hidden="true"></div>
+        <div class="brackets" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="shutter-flash" data-flash aria-hidden="true"></div>
+      </div>
+
+      <div class="checks" role="status" aria-live="polite" aria-label="Photo quality checks">
+        <div class="check" data-check="light"><div class="cl">Light</div><div class="cb"><i></i></div></div>
+        <div class="check" data-check="focus"><div class="cl">Focus</div><div class="cb"><i></i></div></div>
+        <div class="check" data-check="frame"><div class="cl">Framing</div><div class="cb"><i></i></div></div>
+      </div>
+
+      <div class="platecount" data-platecount>looking for your nails…</div>
+      <p class="consent" data-capture-hint style="margin-top:10px">Lining up your hand…</p>
+
+      <button class="shutter" data-shutter disabled aria-label="Take the photo"><i></i></button>
+
+      <div style="text-align:center;margin-top:14px">
+        <button class="btn btn-quiet" data-use-sample>Use a sample photo instead</button>
+      </div>
+    </section>
+
+    <!-- ═════════════ 3 · ANALYSIS ═════════════ -->
+    <section class="screen" data-screen="analyse" aria-label="Reading your photo">
+      <p class="mono" style="margin-bottom:12px">Reading · ONYX-5</p>
+
+      <div class="frame an-frame" data-anframe>
+        <canvas class="shot" data-shot></canvas>
+        <div class="mesh" aria-hidden="true"></div>
+        <div class="beam" aria-hidden="true"></div>
+        <div data-landmarks aria-hidden="true"></div>
+      </div>
+
+      <div class="dial-wrap">
+        <svg class="dial" viewBox="0 0 80 80" aria-hidden="true">
+          <circle class="trk" cx="40" cy="40" r="34"></circle>
+          <circle class="val" data-dial cx="40" cy="40" r="34"
+                  stroke-dasharray="213.6" stroke-dashoffset="213.6"></circle>
+        </svg>
+        <div>
+          <div class="dial-n" data-conf>0.00</div>
+          <div class="dial-l" data-conf-l>Measuring image quality…</div>
+        </div>
+      </div>
+
+      <div class="stages" data-stages role="status" aria-live="polite"></div>
+
+      <div class="read-out rows" data-readout hidden></div>
+    </section>
+
+    <!-- ═════════════ 4 · REPORT ═════════════ -->
+    <section class="screen" data-screen="report" aria-label="Your assessment">
+      <!-- The salon's mark is already in the page header; a second copy here
+           just pushed the verdict card down the screen. -->
+      <div class="rep-top rv" style="padding:2px 0 14px">
+        <div class="rep-date" data-rep-date>Aug 2, 2026 · Report NS-0000</div>
+        <p class="sharednote" data-shared-note hidden>A saved copy of a report. Everything below
+          came from the photograph taken on the day — nothing has been re-read.</p>
+      </div>
+
+      <!-- The whole answer, above the fold. -->
+      <div class="rv"><div class="verdict-card" data-verdict-card></div></div>
+
+      <!-- The record. The site's argument is that the salon keeps one; the
+           report has to be where the client sees it. -->
+      <div class="rv" style="margin-top:22px"><div data-history></div></div>
+
+      <div class="rv" style="margin-top:26px">
+        <div class="sec-lbl">Where your nails are today</div>
+        <div class="rows" data-rep-rows></div>
+      </div>
+
+      <div class="rv" style="margin-top:20px">
+        <details class="disc" data-disc-shape>
+          <summary><span data-why-shape-q>Why this shape</span><span class="dq" data-shape-q></span></summary>
+          <div class="disc-b">
+            <div class="shapehero" data-shapehero></div>
+            <div class="sec-lbl" style="margin:20px 0 9px">The next best three</div>
+            <div class="alts" data-alts></div>
+          </div>
+        </details>
+
+        <details class="disc">
+          <summary><span data-why-colour-q>Why these colours</span><span class="dq" data-colour-q></span></summary>
+          <div class="disc-b">
+            <div class="tonecard" data-tonecard></div>
+            <div class="sec-lbl" style="margin:18px 0 9px">Your full palette</div>
+            <div class="swatches-grid" data-swatches-grid></div>
+            <div class="nudecard" data-nudecard></div>
+          </div>
+        </details>
+
+        <details class="disc">
+          <summary><span>Your measurements</span><span class="dq" data-meas-q>6 readings</span></summary>
+          <div class="disc-b">
+            <div data-spec></div>
+            <div class="platefig" data-platefig style="margin-top:16px"></div>
+          </div>
+        </details>
+
+        <details class="disc">
+          <summary><span>Your plan</span><span class="dq" data-plan-q>3 visits</span></summary>
+          <div class="disc-b"><div class="plan" data-plan></div></div>
+        </details>
+      </div>
+
+      <div class="rv" style="margin-top:26px">
+        <div class="sharebar" data-sharebar></div>
+        <button class="btn btn-ghost btn-lg" data-go="contact" style="margin-top:16px">Book this in</button>
+      </div>
+    </section>
+
+    <!-- ═════════════ 5 · CONTACT ═════════════ -->
+    <section class="screen" data-screen="contact" aria-label="Book your appointment">
+      <div class="rep-top">
+        <h2 style="font-size:clamp(1.7rem,6.4vw,2.1rem)">Where should we send it?</h2>
+        <p class="lede" style="color:var(--fg-2);margin-top:14px;font-size:.95rem">
+          We'll text your report and hold <b data-hold-service>the slot</b> for you.</p>
+      </div>
+
+      <form data-lead novalidate>
+        <label class="field"><span>Your name</span>
+          <input name="name" type="text" autocomplete="name" placeholder="First name" required></label>
+        <label class="field"><span>Mobile number</span>
+          <input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="(713) 555-0100" required></label>
+        <p class="consent" style="text-align:left;margin:2px 0 18px">
+          We'll text you the report and appointment reminders. Reply STOP any time.</p>
+        <button class="btn btn-primary btn-lg" type="submit">Send my report</button>
+      </form>
+    </section>
+
+    <!-- ═════════════ 6 · DONE ═════════════ -->
+    <section class="screen" data-screen="done" aria-label="All set">
+      <div class="done-art">
+        <svg class="tick" viewBox="0 0 80 80" aria-hidden="true">
+          <circle cx="40" cy="40" r="36"></circle>
+          <path d="M25 41.5 L35.5 52 L56 30"></path>
+        </svg>
+      </div>
+      <div class="rep-top" style="padding-top:0">
+        <h2 style="font-size:clamp(1.8rem,6.8vw,2.2rem)">Sent.</h2>
+        <p class="lede" style="color:var(--fg-2);margin-top:14px;font-size:.95rem" data-done-line></p>
+      </div>
+      <div class="rows" data-done-rows style="margin-top:8px"></div>
+      <div style="margin-top:26px">
+        <button class="btn btn-ghost btn-lg" data-restart>Scan another hand</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="scan-foot">
+    <span class="powered">Powered by <b>NailScan</b></span>
+  </footer>
+</div>
+
+<!-- Demo-only tenant switcher. Not part of a salon deployment. -->
+<aside class="demobar" data-demobar role="complementary" aria-label="Demo brand switcher" hidden>
+  <span class="dl">Demo brand</span>
+</aside>
+
+<noscript>
+  <div style="padding:28px;max-width:520px;margin:0 auto">
+    <h1 style="font-family:Georgia,serif">The scanner needs JavaScript</h1>
+    <p style="color:#C3CAD3;margin-top:14px">It reads a photograph in your browser, so it can't run without it.
+      Turn JavaScript on for this page, or call the salon and we'll do the assessment in person.</p>
+  </div>
+</noscript>
+
+<!-- data.js carries Verdict Core and the reading vocabulary. The scanner needs
+     the rules; it ignores the mock ledger the dashboard draws from. -->
+<!-- tenant.js is empty in the reference build and rewritten by the
+     provisioning portal. It is the only file a salon's own build differs by. -->
+<script src="../assets/app/tenant.js"></script>
+<script src="../assets/app/brand.js"></script>
+<script src="../assets/app/data.js"></script>
+<script src="../assets/app/vision.js"></script>
+<script src="../assets/app/report.js"></script>
+<script src="../assets/app/scanner.js"></script>
+</body>
+</html>
