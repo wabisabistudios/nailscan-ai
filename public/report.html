@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Your nail reading — NailScan</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#07080A">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2307080A'/%3E%3Ccircle cx='16' cy='16' r='8.5' fill='none' stroke='%23FF5233' stroke-width='2.5' stroke-dasharray='34 20' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%2358D5E8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<div class="unit">
+
+  <header class="unit-head">
+    <div class="wordmark" id="wordmark">NAILSCAN</div>
+    <div class="unit-meta" id="unit-meta">FIELD UNIT 01</div>
+  </header>
+
+  <main class="unit-body">
+
+    <!-- ========================================================== LOADING -->
+    <section class="stage is-active" id="stage-loading">
+      <p class="eyebrow">Opening your reading</p>
+      <h1>One moment.</h1>
+      <p class="lede">Pulling the record saved from your scan.</p>
+    </section>
+
+    <!-- ============================================================ ERROR -->
+    <section class="stage" id="stage-missing" role="alert">
+      <p class="eyebrow">Record not found</p>
+      <h1 id="miss-h">That link didn't open a reading.</h1>
+      <p class="lede" id="miss-copy">The link may be incomplete, or the reading may have been taken on a different site.</p>
+      <div class="btn-row">
+        <a class="btn" href="/"><span>Take a new scan</span><span class="arrow">&rarr;</span></a>
+      </div>
+    </section>
+
+    <!-- =========================================================== REPORT -->
+    <section class="stage" id="stage-report">
+
+      <div class="verdict reveal is-in" style="--i:0">
+        <img class="thumb" id="rep-thumb" alt="" hidden>
+        <span class="verdict-badge" id="rep-badge"><s></s><em id="rep-badge-t"></em></span>
+        <h1 id="rep-h"></h1>
+        <p class="verdict-line" id="rep-line"></p>
+        <p class="verdict-sub" id="rep-sub"></p>
+      </div>
+
+      <div class="reveal is-in" style="--i:1" id="rep-checks-block" hidden>
+        <div class="section-head">
+          <p class="eyebrow">What we saw</p>
+          <span class="n" id="rep-checks-n"></span>
+        </div>
+        <ul class="checks" id="rep-checks"></ul>
+      </div>
+
+      <div class="reveal is-in" style="--i:2" id="rep-medical-block" hidden>
+        <div class="section-head"><p class="eyebrow">Worth a check</p></div>
+        <p class="callout" id="rep-medical"></p>
+      </div>
+
+      <div class="reveal is-in" style="--i:3" id="rep-cal-block" hidden>
+        <div class="section-head">
+          <p class="eyebrow">Your nail calendar</p>
+          <span class="n" id="rep-cal-n"></span>
+        </div>
+        <p class="fine" id="rep-cal-intro" style="margin:14px 0 4px"></p>
+        <div id="rep-plan-mount"></div>
+        <p class="callout" id="rep-grown" hidden></p>
+      </div>
+
+      <div class="reveal is-in" style="--i:4" id="rep-carry-block" hidden>
+        <div class="section-head"><p class="eyebrow">What suits you</p></div>
+        <div id="rep-carry"></div>
+      </div>
+
+      <div class="reveal is-in" style="--i:5; margin-top:26px">
+        <a class="crosslink" id="cross" href="#" target="_blank" rel="noopener">
+          <span id="cross-t"></span><span class="arrow">&rarr;</span>
+        </a>
+        <p class="fine" id="rep-stamp" style="margin-top:18px;color:var(--ink-3);font-size:12px"></p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="unit-foot">
+    <p id="legal-line"></p>
+    <p id="foot-brand"></p>
+  </footer>
+
+</div>
+
+<script src="/config.js"></script>
+<script src="/js/plan.js"></script>
+<script src="/js/calendar.js"></script>
+<script src="/js/report.js"></script>
+</body>
+</html>

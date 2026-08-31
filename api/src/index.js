@@ -16,23 +16,44 @@
 //
 // See docs/api-contract.md for the original contract this was derived from.
 
+import { ingestScan, attachLead, recordPlanSaved, rpcResolveHost, storeConfigured } from './store.js';
+
 // ============================== BRAND ==============================
 // White-label boundary, our side. Nothing here is client-configurable.
 
-const BRAND = {
+// Defaults, not constants. Everything a salon should be able to change is read
+// through brandFor(env) below, which prefers the deployment's own vars — so the
+// same code serves a NailScan demo and a salon install without an edit.
+const DEFAULT_BRAND = {
   name:    'NailScan',
   site:    'https://try.nailscan.ai',
   locale:  'en-US',
   city:    '',                       // appended to booking CTAs when set
-  // Report-snapshot palette. Mirrors public/css/app.css.
-  ink:     '#14120F',
-  inkSoft: '#63594E',
-  ground:  '#F1EFEA',
-  paper:   '#FCFBF9',
-  lacquer: '#B0271C',
-  field:   '#17301F',
-  amber:   '#C08A22'
+  // Report-snapshot palette. Mirrors public/css/app.css, which mirrors
+  // nailscan.ai. The archival copy has to look like the reading she was
+  // actually shown, or it is not an archive of anything.
+  ink:     '#F4F6F8',      // type on the dark ground
+  inkSoft: '#8A939F',
+  ground:  '#07080A',
+  paper:   '#0F1216',
+  lacquer: '#FF5233',
+  field:   '#3ED598',
+  amber:   '#F2B84B'
 };
+
+// The salon's own identity, per deployment. Falls back to NailScan's for the
+// demo install. Colours are deliberately NOT in here: the palette is the
+// instrument's, not the client's (see public/config.js for why).
+function brandFor(env) {
+  if (!env) return DEFAULT_BRAND;
+  return {
+    ...DEFAULT_BRAND,
+    name:   env.BRAND_NAME   || DEFAULT_BRAND.name,
+    site:   env.SITE_BASE    || DEFAULT_BRAND.site,
+    locale: env.BRAND_LOCALE || DEFAULT_BRAND.locale,
+    city:   env.BRAND_CITY   || DEFAULT_BRAND.city
+  };
+}
 
 // ============================== PERCEPTION ==============================
 
@@ -162,26 +183,26 @@ function decideTier(p) {
 // original bank: this is the product a salon owner is being shown.
 
 const COPY = {
-  ridging_vertical:    { k: 'Surface', v: 'Fine vertical ridges with light dryness — asking for <b>moisture, not repair.</b>', status: 'note', mark: { color: 'marigold', zone: 'mid' } },
-  grooves_longitudinal:{ k: 'Surface', v: 'Deeper lengthwise grooves — these should <b>never be filed flat;</b> they thin the plate. Care works around them.', status: 'note', mark: { color: 'marigold', zone: 'mid' } },
-  lines_transverse:    { k: 'Surface', v: 'Faint lines running across the plate — usually a record of a rough few weeks months ago, now growing out.', status: 'note', mark: { color: 'marigold', zone: 'mid' } },
-  peeling_free_edge:   { k: 'Free edge', v: 'The tips are peeling in layers — the signature of <b>coatings taken off the hard way.</b>', status: 'note', mark: { color: 'red', zone: 'tip' }, fig: 'cross_section' },
-  splitting_lateral:   { k: 'Free edge', v: 'A split starting at the side — worth keeping short and protected while it grows past.', status: 'note', mark: { color: 'red', zone: 'tip' } },
-  white_spots_surface: { k: 'Surface', v: 'White patches on the surface — almost always <b>removal trauma,</b> not a vitamin story.', status: 'note', mark: { color: 'red', zone: 'mid' }, fig: 'cross_section' },
-  surface_rough_patches:{ k: 'Surface', v: 'Rough patches where the top layers have been disturbed — they grow out; they don\u2019t need sanding down.', status: 'note', mark: { color: 'red', zone: 'mid' } },
-  thinning_plate:      { k: 'Plate', v: 'The plate reads thin — bendy tips, shadows under light. It rebuilds; it just needs the cycle broken.', status: 'note', mark: { color: 'red', zone: 'tip' }, fig: 'cross_section' },
-  dryness_dull:        { k: 'Surface', v: 'Reading a little thirsty and dull — the kind of thing daily oil visibly reverses.', status: 'note', mark: { color: 'marigold', zone: 'whole' } },
-  micro_cracks:        { k: 'Plate', v: 'Hairline cracks across the plate — keep length moderate while they grow past.', status: 'note', mark: { color: 'red', zone: 'tip' } },
-  breakage_chips:      { k: 'Free edge', v: 'Chips and breaks at the edge — strength first, length later.', status: 'note', mark: { color: 'red', zone: 'tip' } },
-  cuticle_dry:         { k: 'Cuticle', v: 'Cuticles are intact but dry — a drop of oil a day is the whole prescription.', status: 'note', mark: { color: 'marigold', zone: 'cuticle' } },
-  cuticle_overgrown:   { k: 'Cuticle', v: 'Cuticles have crept up the plate — they want a gentle professional push-back, never cutting at home.', status: 'note', mark: { color: 'marigold', zone: 'cuticle' } },
-  cuticle_picked:      { k: 'Cuticle', v: 'Signs of picking at the edges — your nails\u2019 only request is that you let the studio handle it.', status: 'note', mark: { color: 'red', zone: 'cuticle' } },
-  shape_uneven_length: { k: 'Structure', v: 'Lengths are uneven across the hand — one good shaping session resets the line.', status: 'note', mark: { color: 'marigold', zone: 'tip' } },
-  polish_grow_out:     { k: 'Wear', v: 'Visible grow-out at the base — the coat is past its best and starting to lever at the edges.', status: 'note', mark: { color: 'marigold', zone: 'base' } },
-  staining_yellow_mild:{ k: 'Color', v: 'Mild yellowing from pigment — cosmetic, and it grows out faster with a proper base coat next time.', status: 'note', mark: { color: 'marigold', zone: 'whole' } },
-  healthy_plate:       { k: 'Plate', v: 'A smooth, even plate — whatever you\u2019re doing, it\u2019s working.', status: 'good' },
-  healthy_cuticle:     { k: 'Cuticle', v: 'Healthy, intact cuticles — whoever\u2019s been minding them, keep going.', status: 'good' },
-  even_structure:      { k: 'Structure', v: 'Even length and shape across the hand.', status: 'good' }
+  ridging_vertical:    { k: 'Surface', hd: 'Fine vertical ridges', v: 'Fine vertical ridges with light dryness — asking for <b>moisture, not repair.</b>', status: 'note', mark: { color: 'marigold', zone: 'mid' } },
+  grooves_longitudinal:{ k: 'Surface', hd: 'Deeper lengthwise grooves', v: 'Deeper lengthwise grooves — these should <b>never be filed flat;</b> they thin the plate. Care works around them.', status: 'note', mark: { color: 'marigold', zone: 'mid' } },
+  lines_transverse:    { k: 'Surface', hd: 'Lines across the plate', v: 'Faint lines running across the plate — usually a record of a rough few weeks months ago, now growing out.', status: 'note', mark: { color: 'marigold', zone: 'mid' } },
+  peeling_free_edge:   { k: 'Free edge', hd: 'Tips peeling in layers', v: 'The tips are peeling in layers — the signature of <b>coatings taken off the hard way.</b>', status: 'note', mark: { color: 'red', zone: 'tip' }, fig: 'cross_section' },
+  splitting_lateral:   { k: 'Free edge', hd: 'A split at the side', v: 'A split starting at the side — worth keeping short and protected while it grows past.', status: 'note', mark: { color: 'red', zone: 'tip' } },
+  white_spots_surface: { k: 'Surface', hd: 'White patches', v: 'White patches on the surface — almost always <b>removal trauma,</b> not a vitamin story.', status: 'note', mark: { color: 'red', zone: 'mid' }, fig: 'cross_section' },
+  surface_rough_patches:{ k: 'Surface', hd: 'Rough patches on the surface', v: 'Rough patches where the top layers have been disturbed — they grow out; they don\u2019t need sanding down.', status: 'note', mark: { color: 'red', zone: 'mid' } },
+  thinning_plate:      { k: 'Plate', hd: 'The plate reads thin', v: 'The plate reads thin — bendy tips, shadows under light. It rebuilds; it just needs the cycle broken.', status: 'note', mark: { color: 'red', zone: 'tip' }, fig: 'cross_section' },
+  dryness_dull:        { k: 'Surface', hd: 'Thirsty and a little dull', v: 'Reading a little thirsty and dull — the kind of thing daily oil visibly reverses.', status: 'note', mark: { color: 'marigold', zone: 'whole' } },
+  micro_cracks:        { k: 'Plate', hd: 'Hairline cracks', v: 'Hairline cracks across the plate — keep length moderate while they grow past.', status: 'note', mark: { color: 'red', zone: 'tip' } },
+  breakage_chips:      { k: 'Free edge', hd: 'Chips at the edge', v: 'Chips and breaks at the edge — strength first, length later.', status: 'note', mark: { color: 'red', zone: 'tip' } },
+  cuticle_dry:         { k: 'Cuticle', hd: 'Cuticles intact but dry', v: 'Cuticles are intact but dry — a drop of oil a day is the whole prescription.', status: 'note', mark: { color: 'marigold', zone: 'cuticle' } },
+  cuticle_overgrown:   { k: 'Cuticle', hd: 'Cuticles crept up the plate', v: 'Cuticles have crept up the plate — they want a gentle professional push-back, never cutting at home.', status: 'note', mark: { color: 'marigold', zone: 'cuticle' } },
+  cuticle_picked:      { k: 'Cuticle', hd: 'Signs of picking', v: 'Signs of picking at the edges — your nails\u2019 only request is that you let the studio handle it.', status: 'note', mark: { color: 'red', zone: 'cuticle' } },
+  shape_uneven_length: { k: 'Structure', hd: 'Uneven lengths', v: 'Lengths are uneven across the hand — one good shaping session resets the line.', status: 'note', mark: { color: 'marigold', zone: 'tip' } },
+  polish_grow_out:     { k: 'Wear', hd: 'Grow-out at the base', v: 'Visible grow-out at the base — the coat is past its best and starting to lever at the edges.', status: 'note', mark: { color: 'marigold', zone: 'base' } },
+  staining_yellow_mild:{ k: 'Color', hd: 'Mild yellowing', v: 'Mild yellowing from pigment — cosmetic, and it grows out faster with a proper base coat next time.', status: 'note', mark: { color: 'marigold', zone: 'whole' } },
+  healthy_plate:       { k: 'Plate', hd: 'A smooth, even plate', v: 'A smooth, even plate — whatever you\u2019re doing, it\u2019s working.', status: 'good' },
+  healthy_cuticle:     { k: 'Cuticle', hd: 'Healthy cuticles', v: 'Healthy, intact cuticles — whoever\u2019s been minding them, keep going.', status: 'good' },
+  even_structure:      { k: 'Structure', hd: 'Even length and shape', v: 'Even length and shape across the hand.', status: 'good' }
 };
 
 const ZONE_WORDS = { tip: 'tips', mid: 'mid-plate', base: 'base', cuticle: 'cuticles', folds: 'nail folds', whole: 'across the plate' };
@@ -223,6 +244,7 @@ const TIER_COPY = {
 
 // ============================== CALENDAR RULES ==============================
 
+const BRAND = DEFAULT_BRAND;          // module-level default; request paths use brandFor(env)
 const LOCALITY = BRAND.city ? ' \u00b7 ' + BRAND.city : '';
 
 const DAY = 86400000;
@@ -342,11 +364,14 @@ function buildChecks(tier, findings) {
     const zone = c.mark && c.mark.zone !== 'whole' ? (f.zone && f.zone !== 'whole' ? f.zone : c.mark.zone) : f.zone;
     const where = c.status === 'good' ? fingersPhrase(f.fingers)
       : `${fingersPhrase(f.fingers)}${zone && zone !== 'whole' ? ', ' + ZONE_WORDS[zone] : ''}`;
-    rows.push({ k: `${c.k} \u00b7 ${where}`, v: c.v, status: c.status });
+    // `hd` is the two-second version, `k` the location, `v` the full sentence.
+    // The report shows hd alone and opens the rest on a tap — a reading that
+    // reads as a wall of prose is a reading nobody finishes.
+    rows.push({ hd: c.hd || c.k, k: `${c.k} \u00b7 ${where}`, v: c.v, status: c.status });
   }
   if (rows.length === 0 && tier === 'healthy') {
-    rows.push({ k: 'Plate \u00b7 all five', v: COPY.healthy_plate.v, status: 'good' });
-    rows.push({ k: 'Structure \u00b7 all five', v: COPY.even_structure.v, status: 'good' });
+    rows.push({ hd: COPY.healthy_plate.hd, k: 'Plate \u00b7 all five', v: COPY.healthy_plate.v, status: 'good' });
+    rows.push({ hd: COPY.even_structure.hd, k: 'Structure \u00b7 all five', v: COPY.even_structure.v, status: 'good' });
   }
   return rows;
 }
@@ -491,8 +516,11 @@ function normalizePhone(raw, country) {
 // (location cj1dKYGBhaLLrI6e0Jkg). Keys are snake_case; the key -> custom-field
 // mapping lives inside the GHL workflow, exactly as in the original. Never
 // blocks the caller: a CRM failure is logged and swallowed.
-async function pushGHL(env, payload) {
-  const url = env.GHL_WEBHOOK_URL;
+async function pushGHL(env, payload, tenant) {
+  // The salon's own CRM when they have configured one; ours otherwise. A salon
+  // that wants its leads in its own GoHighLevel gets that, and does not have
+  // to take our word for what we do with them.
+  const url = (tenant && tenant.settings && tenant.settings.ghl_webhook_url) || env.GHL_WEBHOOK_URL;
   if (!url) { console.log(`[GHL] ${payload && payload.event}: no webhook url configured`); return false; }
   try {
     const res = await fetch(url, {
@@ -546,13 +574,14 @@ function buildScanSummary(record) {
 // Archival copy only: stored in R2, never surfaced to a client or to staff.
 // Palette and type mirror public/css/app.css so the snapshot reads as the same
 // product, and the whole thing is driven by BRAND.
-function renderReportHtml(record) {
+function renderReportHtml(record, brand) {
+  const BRAND = brand || DEFAULT_BRAND;   // shadows the module default on purpose
   const d = record.display || {};
   const v = d.verdict || {};
   let dateStr = '';
   try { dateStr = new Date(record.created_at).toLocaleDateString(BRAND.locale, { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) {}
   const checks = (d.checks || []).map(c =>
-    `<li class="chk ${c.status === 'good' ? 'good' : 'note'}"><span class="k">${esc(c.k)}</span><span class="v">${c.v}</span></li>`
+    `<li class="chk ${c.status === 'good' ? 'good' : 'note'}"><span class="hd">${esc(c.hd || c.k)}</span><span class="k">${esc(c.k)}</span><span class="v">${c.v}</span></li>`
   ).join('');
   const ms = ((d.calendar && d.calendar.milestones) || []).map(m =>
     `<li class="ms"><span class="dt">${esc(fmtShortIso(m.date))}</span><span class="bd"><b>${esc(m.label)}</b>${m.sub ? `<span class="s">${esc(m.sub)}</span>` : ''}</span></li>`
@@ -568,34 +597,35 @@ function renderReportHtml(record) {
 <meta name="robots" content="noindex,nofollow">
 <title>Nail reading &middot; ${esc(BRAND.name)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
-:root{--ink:${BRAND.ink};--ink2:${BRAND.inkSoft};--ground:${BRAND.ground};--paper:${BRAND.paper};--lacquer:${BRAND.lacquer};--field:${BRAND.field};--amber:${BRAND.amber};--line:rgba(20,18,15,.13);--s:'Inter',-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;--m:'IBM Plex Mono',ui-monospace,monospace;}
+:root{--ink:${BRAND.ink};--ink2:${BRAND.inkSoft};--ground:${BRAND.ground};--paper:${BRAND.paper};--lacquer:${BRAND.lacquer};--field:${BRAND.field};--amber:${BRAND.amber};--line:#1C2128;--line2:#262D36;--s:'Geist',-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;--m:'Geist Mono',ui-monospace,monospace;--d:'Instrument Serif','Iowan Old Style',Georgia,serif;}
 *{box-sizing:border-box;}body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--s);line-height:1.55;-webkit-font-smoothing:antialiased;}
 .wrap{max-width:560px;margin:0 auto;padding:30px 22px 56px;}
-.top{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid var(--ink);padding-bottom:11px;font-family:var(--m);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);}
+.top{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line2);padding-bottom:11px;font-family:var(--m);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);}
 .top b{font-family:var(--s);font-weight:700;letter-spacing:.22em;color:var(--ink);}
 .verdict{padding:24px 0;border-bottom:1px solid var(--line);}
 .badge{font-family:var(--m);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--lacquer);}
-h1{font-size:31px;line-height:1.06;letter-spacing:-.025em;font-weight:650;margin:12px 0 10px;}
-h1 .italic{font-style:italic;font-weight:600;}
-.hl{background:linear-gradient(transparent 62%,rgba(192,138,34,.42) 62%);}
+h1{font-family:var(--d);font-size:36px;line-height:1.03;letter-spacing:-.022em;font-weight:400;margin:12px 0 10px;}
+h1 .italic{font-style:italic;}
+.hl{background:linear-gradient(transparent 64%,rgba(255,82,51,.20) 64%);box-shadow:0 1px 0 rgba(255,82,51,.32);}
 .line{font-size:18px;letter-spacing:-.012em;}
 .sub{margin:13px 0 0;font-size:14.5px;color:var(--ink2);}
 .sec{padding:22px 0;border-bottom:1px solid var(--line);}
 .lbl{font-family:var(--m);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--lacquer);margin-bottom:12px;}
 ul{list-style:none;margin:0;padding:0;}
 .chk{padding:13px 0;border-top:1px solid var(--line);}.chk:first-child{border-top:0;}
-.chk .k{display:flex;align-items:center;gap:8px;font-family:var(--m);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);margin-bottom:4px;}
-.chk .k:before{content:'';width:6px;height:6px;background:var(--lacquer);flex:none;}
-.chk.good .k:before{background:var(--field);}
-.chk .v{font-size:15px;}
+.chk .hd{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:500;color:var(--ink);margin-bottom:4px;}
+.chk .k{display:block;font-family:var(--m);font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink2);margin-bottom:5px;padding-left:14px;}
+.chk .hd:before{content:'';width:6px;height:6px;background:var(--lacquer);flex:none;}
+.chk.good .hd:before{background:var(--field);border-radius:50%;}
+.chk .v{display:block;font-size:14.5px;color:var(--ink2);padding-left:14px;}
 .ms{display:flex;gap:16px;padding:12px 0;border-top:1px solid var(--line);}.ms:first-child{border-top:0;}
 .ms .dt{font-family:var(--m);font-size:11px;font-weight:500;color:var(--lacquer);min-width:58px;font-variant-numeric:tabular-nums;}
 .ms .bd b{display:block;font-weight:600;}.ms .s{display:block;font-size:13.5px;color:var(--ink2);}
 .carry{padding:12px 0;border-top:1px solid var(--line);}.carry:first-of-type{border-top:0;}
-.carry .pill{display:inline-block;font-family:var(--m);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;background:var(--ink);color:var(--paper);padding:2px 7px;margin-bottom:6px;}
-.carry b{display:block;font-size:18px;font-weight:650;}.carry .cl{display:block;font-size:13.5px;color:var(--ink2);}
+.carry .pill{display:inline-block;font-family:var(--m);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;background:var(--lacquer);color:#100603;padding:2px 7px;margin-bottom:6px;}
+.carry b{display:block;font-family:var(--d);font-size:21px;font-weight:400;}.carry .cl{display:block;font-size:13.5px;color:var(--ink2);}
 .foot{margin-top:26px;font-family:var(--m);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-align:center;line-height:1.8;}
 </style></head><body><div class="wrap">
 <div class="top"><b>${esc(BRAND.name)}</b><span>Nail reading &middot; ${esc(dateStr)}</span></div>
@@ -622,6 +652,116 @@ async function uploadScanAssets(env, id, imageBytes, mediaType, reportHtml) {
     reportUrl = `${base}/api/scans/${id}/report.html`;
   } catch (e) { reportUrl = ''; }
   return { imageUrl, reportUrl };
+}
+
+// ============================== TENANCY ==============================
+//
+// Which salon does this request belong to?
+//
+// The answer comes from the REQUEST URL's hostname and from nothing else. Not
+// the Origin header, not a field in the body, not a query parameter. This
+// Worker holds a service key that bypasses row-level security, so a tenant
+// taken from anything the caller controls would let a crafted request write a
+// scan, a lead or a photo into another salon's book. Origin looks tempting
+// because it carries the salon's domain in the current cross-origin setup —
+// and curl can set it to whatever it likes, which is exactly the point.
+//
+// The consequence is a deployment requirement, not a code detail: to serve
+// more than one salon, the Worker must be ROUTED on each salon's hostname, so
+// that request.url carries it. A Worker reached at its workers.dev address
+// cannot tell one salon from another, and this code refuses to guess — it logs
+// and falls back rather than picking someone.
+//
+// Everything about this degrades to today's behaviour:
+//   * TENANT_RESOLUTION unset or "fixed"  -> TENANT_SLUG, exactly as before
+//   * hostname not in the database        -> fall back
+//   * Supabase slow, down or unreachable  -> fall back
+// A database problem must never cost somebody her reading.
+
+const TENANT_TTL_MS = 60000;
+const TENANT_CACHE = new Map();          // host -> { at, value }
+
+function requestHost(request) {
+  try { return new URL(request.url).hostname.toLowerCase(); } catch (e) { return ''; }
+}
+
+// A hostname we cannot attribute to a salon. Not an error in `fixed` mode.
+function isUnattributable(host) {
+  return !host || host.endsWith('.workers.dev') || host === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(host);
+}
+
+function configTenant(env) {
+  return {
+    slug: env.TENANT_SLUG || '',
+    tenantId: null,
+    brand: brandFor(env),
+    settings: {},
+    source: 'config'
+  };
+}
+
+async function resolveTenant(env, request) {
+  const fallback = configTenant(env);
+  if ((env.TENANT_RESOLUTION || 'fixed') !== 'host') return fallback;
+  if (!storeConfigured(env)) return fallback;
+
+  const host = requestHost(request);
+  if (isUnattributable(host)) {
+    console.log(`[tenant] host mode but request host is ${JSON.stringify(host)} — not attributable, using TENANT_SLUG. Route the Worker on the salon's domain.`);
+    return fallback;
+  }
+
+  const hit = TENANT_CACHE.get(host);
+  if (hit && Date.now() - hit.at < TENANT_TTL_MS) return hit.value;
+
+  let row = null;
+  try {
+    row = await rpcResolveHost(env, host);
+  } catch (e) {
+    console.log(`[tenant] lookup failed for ${host}: ${e && e.message}`);
+    return fallback;
+  }
+  if (!row) {
+    console.log(`[tenant] no salon mapped to ${host} — using TENANT_SLUG`);
+    // Cache the miss briefly too, so an unmapped host cannot hammer the database.
+    TENANT_CACHE.set(host, { at: Date.now(), value: fallback });
+    return fallback;
+  }
+
+  const base = brandFor(env);
+  const brand = row.brand || {};
+  const value = {
+    slug: row.slug,
+    tenantId: row.tenant_id,
+    status: row.status,
+    brand: {
+      ...base,
+      name:   brand.name   || row.name   || base.name,
+      site:   'https://' + (row.primary_host || host),
+      locale: row.locale   || base.locale,
+      city:   brand.city   || base.city
+    },
+    settings: row.settings || {},
+    source: 'host'
+  };
+  TENANT_CACHE.set(host, { at: Date.now(), value });
+  return value;
+}
+
+// ============================== CLIENT FILE ==============================
+// The durable half. KV holds the record the front end reads back seconds later;
+// Postgres holds the file the salon works from for years. Neither is allowed to
+// block the reading — see api/src/store.js.
+
+const isPositiveFinding = code => !!(COPY[code] && COPY[code].status === 'good');
+
+// Fire-and-forget when we have a ctx (production), awaited when we do not
+// (tests, local runs). Either way a failure only ever reaches the log.
+function background(ctx, promise) {
+  const guarded = Promise.resolve(promise).catch(e =>
+    console.log('[store] background task failed: ' + (e && e.message)));
+  if (ctx && typeof ctx.waitUntil === 'function') { ctx.waitUntil(guarded); return null; }
+  return guarded;
 }
 
 // ============================== HTTP ==============================
@@ -671,8 +811,11 @@ const str = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
 
 // ------------------------------------------------------------------ scan --
 
-async function handleAnalyze(request, env, C) {
+async function handleAnalyze(request, env, C, ctx) {
   if (await rateLimited(env, request, 'scan', 12)) return json({ error: 'rate_limited' }, 429, C);
+
+  // Whose salon this is — from the hostname, never from the body below.
+  const tenant = await resolveTenant(env, request);
 
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400, C); }
@@ -697,20 +840,54 @@ async function handleAnalyze(request, env, C) {
 
   // Photo + archival snapshot to R2. Best-effort: never fails the scan.
   try {
-    const up = await uploadScanAssets(env, id, base64ToBytes(imageB64), mediaType, renderReportHtml(record));
+    const up = await uploadScanAssets(env, id, base64ToBytes(imageB64), mediaType, renderReportHtml(record, tenant.brand));
     record.assets = { image: up.imageUrl, report: up.reportUrl };
   } catch (e) { record.assets = { image: '', report: '' }; }
 
   // Permanent, no TTL — /api/lead reads this back, and the record is the report.
   if (env.REPORTS) await env.REPORTS.put('r:' + id, JSON.stringify(record));
 
+  // Into the client file. Unattached for now: nobody has said who this is, and
+  // an anonymous reading is still something the salon should be able to count.
+  // Deliberately not awaited — she gets her report at the speed of the vision
+  // call, not the speed of a database.
+  background(ctx, ingestScan(env, tenant.slug, record, isPositiveFinding, buildScanSummary(record)));
+
   return json({ ok: true, id, record, record_version: 2 }, 200, C);
 }
 
 // ------------------------------------------------------------------ lead --
 
-async function handleLead(request, env, C) {
+// A contact with no readable scan behind it. Still a lead, still pushed, but
+// tagged so it is obvious in the CRM and countable in KV. Best-effort by
+// design: this path exists because something already went wrong upstream.
+async function captureOrphanLead(env, c, tenant) {
+  const now = new Date();
+  const key = `orphan:${now.toISOString()}:${shortId()}`;
+  const payload = {
+    event: 'nailscan_try_lead',
+    source: c.source || 'try-demo',
+    name: c.name, salon: c.salon, email: c.email, phone: c.phone, country: c.country,
+    consent: true, consented_at: now.toISOString(),
+    tags: 'demo,try-scan,scan-unmatched',
+    scan_id: c.scanId || '',
+    tier: '', wear: '',
+    scan_score: 'unmatched',
+    scan_summary: 'Contact captured, but the scan record behind it could not be read. Follow up without scan detail.',
+    submitted_at: now.toISOString()
+  };
+  const delivered = await pushGHL(env, payload, tenant);
+  console.log(`[lead] UNMATCHED scan_id=${JSON.stringify(c.scanId)} delivered=${delivered}`);
+  if (env.REPORTS) {
+    try { await env.REPORTS.put(key, JSON.stringify({ ...payload, delivered })); } catch (e) {}
+  }
+  return delivered;
+}
+
+async function handleLead(request, env, C, ctx) {
   if (await rateLimited(env, request, 'lead', 20)) return json({ error: 'rate_limited' }, 429, C);
+
+  const tenant = await resolveTenant(env, request);
 
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400, C); }
@@ -731,12 +908,28 @@ async function handleLead(request, env, C) {
     const raw = await env.REPORTS.get('r:' + id);
     if (raw) { try { record = JSON.parse(raw); } catch (e) { record = null; } }
   }
-  if (!record) return json({ error: 'unknown_scan' }, 404, C);
+
+  // A lead is never dropped because its scan could not be found.
+  //
+  // The front end deliberately fails open — it unlocks the calendar even when
+  // this endpoint errors, because the reading is already on her device and a
+  // backend problem is ours, not hers. The cost of that choice is that a 404
+  // here was invisible on both sides: she saw success, and the lead vanished.
+  // A misconfigured KV binding could bleed every lead this way and nobody
+  // would know.
+  //
+  // So an unmatched submission is still a real person who typed her details in.
+  // Capture the contact, push it with what we have, and mark it unmatched so it
+  // can be reconciled. `matched:false` is the signal to alert on.
+  if (!record) {
+    await captureOrphanLead(env, { name, salon, email, phone, country, scanId: id, source: str(body.source, 40) }, tenant);
+    return json({ ok: true, delivered: true, matched: false }, 200, C);
+  }
 
   const d = record.display || {};
   const cal = d.calendar;
   const now = new Date();
-  const reportUrl = `${BRAND.site}/report?id=${record.id}`;
+  const reportUrl = `${tenant.brand.site}/report?id=${record.id}`;
 
   const tags = ['demo', 'try-scan', 'nail-scan-' + record.tier, 'wear-' + record.wear]
     .concat(record.perception ? record.perception.findings.map(f => 'finding-' + f.code) : []);
@@ -761,23 +954,136 @@ async function handleLead(request, env, C) {
     report_url: reportUrl,
     scanned_at: record.created_at,
     submitted_at: now.toISOString()
-  });
+  }, tenant);
 
   // Stamp the record so a resubmit is visible in KV, and keep the contact with
   // the scan for the staff-side view.
   record.lead = { name, salon, email, phone, country, at: now.toISOString(), delivered: ok };
   if (env.REPORTS) await env.REPORTS.put('r:' + record.id, JSON.stringify(record));
 
+  // A CRM outage is silent by design on the client side. Leave a countable
+  // trace so it is not silent on ours: these keys are the reconcile queue.
+  if (!ok && env.REPORTS) {
+    console.log(`[lead] UNDELIVERED scan_id=${record.id}`);
+    try {
+      await env.REPORTS.put(`undelivered:${now.toISOString()}:${record.id}`,
+        JSON.stringify({ scan_id: record.id, name, salon, email, phone, country, at: now.toISOString() }));
+    } catch (e) {}
+  }
+
+  // The reading becomes somebody's file. Phone is the identity, so a client who
+  // scanned in March and scans again in August lands on the same file with both
+  // readings on it — which is the entire point of the product.
+  //
+  // If the scan is not in Postgres yet (its background ingest lost a race, or
+  // was still in flight when she typed fast), ingest it here and retry once.
+  // Losing the link between a person and her reading is not an acceptable
+  // outcome of a race.
+  if (storeConfigured(env)) {
+    const consentText = str(body.consent_text, 2000) || null;
+    const claim = attachLead(env, tenant.slug, record.id, { name, salon, email, phone, country, source: record.source }, consentText)
+      .then(async r => {
+        if (r) return r;
+        await ingestScan(env, tenant.slug, record, isPositiveFinding, buildScanSummary(record));
+        return attachLead(env, tenant.slug, record.id, { name, salon, email, phone, country, source: record.source }, consentText);
+      });
+    background(ctx, claim);
+  }
+
   // `ok: true` even when GHL is down. The calendar is already on her device and
   // the record is already persisted — a CRM outage is ours to reconcile, not
   // hers to be blocked by. `delivered` says what actually happened.
-  return json({ ok: true, delivered: ok }, 200, C);
+  return json({ ok: true, delivered: ok, matched: true }, 200, C);
+}
+
+// ------------------------------------------------------------------ plan --
+//
+// She ticked some reminders and downloaded them. The file itself is built and
+// saved entirely on her device — this endpoint is only how the salon finds out,
+// so it carries a summary and never the file.
+//
+// It cannot fail in a way she notices. By the time this request goes out the
+// .ics is already in her downloads; a bad response here is ours to reconcile,
+// not a thing to show her an error about.
+
+async function handlePlan(request, env, C, ctx) {
+  if (await rateLimited(env, request, 'plan', 40)) return json({ error: 'rate_limited' }, 429, C);
+
+  const tenant = await resolveTenant(env, request);
+
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400, C); }
+
+  const id = str(body && body.id, 16).toLowerCase().replace(/[^0-9a-z]/g, '');
+  const items = Array.isArray(body && body.items) ? body.items.slice(0, 40) : [];
+  if (!id || !items.length) return json({ error: 'missing_fields' }, 400, C);
+
+  let record = null;
+  if (env.REPORTS) {
+    const raw = await env.REPORTS.get('r:' + id);
+    if (raw) { try { record = JSON.parse(raw); } catch (e) { record = null; } }
+  }
+  if (!record) {
+    console.log(`[plan] UNKNOWN scan_id=${id} items=${items.length}`);
+    return json({ ok: true, matched: false }, 200, C);
+  }
+
+  const appts  = items.filter(i => i && i.kind !== 'habit').length;
+  const habits = items.filter(i => i && i.kind === 'habit').length;
+  const eventDate  = str(body.event_date, 10);
+  const eventLabel = str(body.event_label, 60);
+  const now = new Date();
+  const lead = record.lead || {};
+
+  const summary = {
+    total: items.length,
+    event_date: eventDate,
+    event_label: eventLabel,
+    payload: {
+      service: str(body.service, 60),
+      rhythm:  str(body.rhythm, 20),
+      appointments: appts,
+      habits: habits,
+      items: items.map(i => str(i && i.id, 40)).filter(Boolean)
+    }
+  };
+
+  // Stamp the record, so the salon-side view and any later replay both see it.
+  record.plan = { at: now.toISOString(), total: items.length, appointments: appts,
+                  habits: habits, event_date: eventDate, event_label: eventLabel };
+  if (env.REPORTS) await env.REPORTS.put('r:' + id, JSON.stringify(record));
+
+  background(ctx, Promise.all([
+    pushGHL(env, {
+      event: 'nailscan_plan_saved',
+      source: str(body.source, 40) || record.source || 'try-demo',
+      // Identity, so the workflow finds the contact it already has.
+      name: lead.name || '', email: lead.email || '', phone: lead.phone || '',
+      country: lead.country || '',
+      scan_id: id, tier: record.tier, wear: record.wear,
+      plan_total: items.length,
+      plan_appointments: appts,
+      plan_habits: habits,
+      plan_titles: items.map(i => str(i && i.title, 80)).filter(Boolean).join(' | '),
+      plan_next_date: items.map(i => str(i && i.date, 10)).filter(Boolean).sort()[0] || '',
+      // The one field worth interrupting somebody for.
+      plan_event_label: eventLabel,
+      plan_event_date: eventDate,
+      plan_service: str(body.service, 60),
+      plan_rhythm: str(body.rhythm, 20),
+      saved_at: now.toISOString()
+    }, tenant),
+    storeConfigured(env) ? recordPlanSaved(env, tenant.slug, id, summary) : Promise.resolve(null)
+  ]));
+
+  console.log(`[plan] scan_id=${id} total=${items.length} appts=${appts} habits=${habits} event=${JSON.stringify(eventLabel)}`);
+  return json({ ok: true, matched: true }, 200, C);
 }
 
 // ------------------------------------------------------------------ main --
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const C = cors(env, request.headers.get('Origin') || '');
 
@@ -786,7 +1092,39 @@ export default {
     // Liveness — the deploy check. Pages returns 200 for unknown paths on the
     // sibling project, so a real body is the only proof the Worker is routed.
     if (request.method === 'GET' && url.pathname === '/api/health') {
-      return json({ ok: true, worker: 'nailscan-try-api', brand: BRAND.name, site: BRAND.site }, 200, C);
+      const t = await resolveTenant(env, request);
+      return json({
+        ok: true, worker: 'nailscan-try-api',
+        brand: t.brand.name, site: t.brand.site,
+        tenant: t.slug, resolution: env.TENANT_RESOLUTION || 'fixed', resolved_by: t.source,
+        host: requestHost(request)
+      }, 200, C);
+    }
+
+    // The salon's own identity, for a page that does not know whose install it
+    // is serving. Public and deliberately thin: a name, a logo, booking links.
+    // No settings, no webhook, nothing a competitor could not read off the page
+    // anyway. Cached at the edge for a minute — a rename should land quickly,
+    // but not at the cost of a lookup per visitor.
+    if (request.method === 'GET' && url.pathname === '/api/config') {
+      const t = await resolveTenant(env, request);
+      return json({
+        ok: true,
+        source: t.source,
+        brand: {
+          name:   t.brand.name,
+          site:   t.brand.site,
+          locale: t.brand.locale,
+          city:   t.brand.city,
+          logo:   (t.settings && t.settings.overrides && t.settings.overrides.logo) || null
+        },
+        links: {
+          booking:         (t.settings && t.settings.booking_url) || null,
+          crossLink:       (t.settings && t.settings.cross_link_url) || null,
+          crossLinkLabel:  (t.settings && t.settings.cross_link_label) || null,
+          support:         (t.settings && t.settings.support_email) || null
+        }
+      }, 200, { ...C, 'cache-control': 'public, max-age=60' });
     }
 
     if (request.method === 'GET' && url.pathname.startsWith('/api/report/')) {
@@ -811,12 +1149,13 @@ export default {
       }});
     }
 
-    if (request.method === 'POST' && url.pathname === '/api/analyze-nails') return handleAnalyze(request, env, C);
-    if (request.method === 'POST' && url.pathname === '/api/lead')          return handleLead(request, env, C);
+    if (request.method === 'POST' && url.pathname === '/api/analyze-nails') return handleAnalyze(request, env, C, ctx);
+    if (request.method === 'POST' && url.pathname === '/api/lead')          return handleLead(request, env, C, ctx);
+    if (request.method === 'POST' && url.pathname === '/api/plan')          return handlePlan(request, env, C, ctx);
 
     return json({ error: 'not_found' }, 404, C);
   }
 };
 
 // exported for engine tests
-export { BRAND, buildRecord, decideTier, buildCalendar, pickTrends, parsePerception, legacyFromRecord, renderReportHtml, buildScanSummary, base64ToBytes, normalizePhone, COPY, FINDING_CODES, FLAG_CODES };
+export { resolveTenant, requestHost, brandFor, BRAND, buildRecord, decideTier, buildCalendar, pickTrends, parsePerception, legacyFromRecord, renderReportHtml, buildScanSummary, base64ToBytes, normalizePhone, COPY, FINDING_CODES, FLAG_CODES };

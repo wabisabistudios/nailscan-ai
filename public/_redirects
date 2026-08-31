@@ -1,0 +1,7 @@
+# Cloudflare Pages rewrites.
+#
+# report_url minted by the Worker is <site>/report?id=<id> — it goes into the
+# CRM, the follow-up email and Maya's call context, so it must resolve. Pages
+# serves /report.html for /report by default; this makes that explicit and
+# survives a future change to that default. 200 = rewrite, query string kept.
+/report  /report.html  200

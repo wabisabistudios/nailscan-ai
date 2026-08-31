@@ -113,3 +113,38 @@ all-sales-final live on `/watch`, never here.
 
 See [docs/deploy.md](docs/deploy.md). Nothing auto-publishes: deploys go to a
 preview URL for approval before the domain flips.
+
+## The plan
+
+`public/js/plan.js` + `public/js/calendar.js` turn the reading into dates
+somebody will actually keep.
+
+The reading's own milestones come through untouched — the Worker computed them
+and nothing on the client edits them. What the planner adds is the two things a
+photo cannot know:
+
+* **what she had done today**, which sets the rebook rhythm (gel three weeks,
+  BIAB four, a gel pedicure six — the numbers live in `config.js`, not in code)
+* **what she has coming up**, which it works backwards from: two to five days
+  before the day itself, past the setting window and short of any grow-out
+
+It also says when those two disagree. A removal due on or before the wedding is
+called out, because that is the case where following the pretty calendar and
+following the reading are not the same thing.
+
+Export is a plain `.ics` download plus Google's own prefill link — no sign-in, no
+OAuth client, nothing of hers held by us, and it works on the phone she is
+holding. All-day events with a reminder the day before, folded at 75 octets,
+because a calendar file that one phone rejects is worse than no file.
+
+The whole thing is pure functions with no DOM and no network, so
+`test/plan-test.mjs` can check the arithmetic — 42 assertions covering the
+intervals, the event maths, the clash detection and the file format:
+
+```
+node test/plan-test.mjs
+```
+
+The saved-reading page mounts the same planner, so the link in her email is not
+a flat copy of what she saw: she can come back in three weeks, tell it about a
+wedding, and get new dates out of the same reading.

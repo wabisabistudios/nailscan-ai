@@ -1,0 +1,251 @@
+{
+  "tenant_slug": "nailscan-demo",
+  "public_id": "q7x2m9a",
+  "source": "try-demo",
+  "captured_at": "2026-08-31T12:00:00.000Z",
+  "tier": "manageable",
+  "wear": "gel",
+  "confidence": 0.82,
+  "photo_quality": 0.86,
+  "nails_visible": 5,
+  "hand": "left",
+  "undertone": "warm",
+  "nail_bed": "balanced",
+  "summary": "Lovely base carrying some wear.",
+  "record": {
+    "v": 2,
+    "id": "q7x2m9a",
+    "name": "",
+    "created_at": "2026-08-31T12:00:00.000Z",
+    "concern": null,
+    "tier": "manageable",
+    "wear": "gel",
+    "display": {
+      "headline": "Your nails are asking for <span class=\"italic\">a little love.</span>",
+      "verdict": {
+        "num": "2/4",
+        "label": "A LITTLE LOVE",
+        "line": "Lovely base. Some wear. <span class=\"hl\">Entirely reversible.</span>",
+        "sub": "No drama, no upsell. Good condition carrying some wear — mapped nail by nail below, with the schedule that undoes it."
+      },
+      "checks": [
+        {
+          "hd": "Tips peeling in layers",
+          "k": "Free edge · index + middle, tips",
+          "v": "The tips are peeling in layers — the signature of <b>coatings taken off the hard way.</b>",
+          "status": "note"
+        },
+        {
+          "hd": "Cuticles intact but dry",
+          "k": "Cuticle · thumb, cuticles",
+          "v": "Cuticles are intact but dry — a drop of oil a day is the whole prescription.",
+          "status": "note"
+        },
+        {
+          "hd": "A smooth, even plate",
+          "k": "Plate · all five",
+          "v": "A smooth, even plate — whatever you’re doing, it’s working.",
+          "status": "good"
+        }
+      ],
+      "map": {
+        "hand": "left",
+        "marks": [
+          {
+            "color": "red",
+            "zone": "tip",
+            "fingers": [
+              1,
+              2
+            ],
+            "label": "Free edge"
+          }
+        ],
+        "cuticle": "marigold"
+      },
+      "figures": {
+        "cross_section": true,
+        "growth": true
+      },
+      "calendar": {
+        "intro": "Dates computed from your photo. The wear grows <b>out</b>, not deeper. Save them — this is the whole plan.",
+        "milestones": [
+          {
+            "date": "2026-09-14",
+            "label": "Gel removal-by",
+            "sub": "(soaked, never peeled)",
+            "kind": "action",
+            "primary": true,
+            "service": "gel-removal",
+            "cta": "Secure the Sep 14 removal slot",
+            "ctaSub": "Soak-off removal, never peeled · 20 min"
+          },
+          {
+            "date": "2026-09-28",
+            "label": "Strengthening visit",
+            "sub": "polish-free block ends",
+            "kind": "action",
+            "service": "biab-nail-strengthening-therapy"
+          },
+          {
+            "date": "2026-10-16",
+            "label": "Recovery check",
+            "sub": "ridges should soften",
+            "kind": "check"
+          },
+          {
+            "date": "2026-11-09",
+            "label": "Tip damage fully grown out",
+            "sub": "≈ 3mm of growth a month",
+            "kind": "goal"
+          }
+        ],
+        "grown_out": "2026-11-09",
+        "book": {
+          "label": "Secure the Sep 14 removal slot",
+          "sub": "Soak-off removal, never peeled · 20 min",
+          "service": "gel-removal",
+          "date": "2026-09-14"
+        }
+      },
+      "carry": {
+        "now": {
+          "tag": "Now",
+          "name": "Glazed nude",
+          "line": "Sheer, glossy, one coat — lets the plate breathe and recover while still looking finished.",
+          "when": "Safe during recovery"
+        },
+        "later": {
+          "tag": "After Nov 9",
+          "name": "Chrome",
+          "line": "Mirror finish that loves an even, healthy plate.",
+          "when": "Unlocked by your calendar"
+        }
+      },
+      "medical": null,
+      "quality_issues": []
+    },
+    "perception": {
+      "findings": [
+        {
+          "code": "peeling_free_edge",
+          "fingers": [
+            "index",
+            "middle"
+          ],
+          "zone": "tip",
+          "severity": "moderate"
+        },
+        {
+          "code": "cuticle_dry",
+          "fingers": [
+            "thumb"
+          ],
+          "zone": "cuticle",
+          "severity": "mild"
+        },
+        {
+          "code": "healthy_plate",
+          "fingers": [],
+          "zone": "whole",
+          "severity": "mild"
+        }
+      ],
+      "flags": [],
+      "photo_quality": {
+        "score": 0.86,
+        "issues": []
+      },
+      "confidence": 0.82,
+      "nails_visible": 5,
+      "hand": "left",
+      "undertone": "warm",
+      "nail_bed": "balanced"
+    },
+    "source": "try-demo",
+    "assets": {
+      "image": "https://try.nailscan.ai/api/scans/q7x2m9a/photo.jpg",
+      "report": "https://try.nailscan.ai/api/scans/q7x2m9a/report.html"
+    }
+  },
+  "record_version": 2,
+  "findings": [
+    {
+      "code": "peeling_free_edge",
+      "fingers": [
+        "index",
+        "middle"
+      ],
+      "zone": "tip",
+      "severity": "moderate",
+      "is_positive": false
+    },
+    {
+      "code": "cuticle_dry",
+      "fingers": [
+        "thumb"
+      ],
+      "zone": "cuticle",
+      "severity": "mild",
+      "is_positive": false
+    },
+    {
+      "code": "healthy_plate",
+      "fingers": [],
+      "zone": "whole",
+      "severity": "mild",
+      "is_positive": true
+    }
+  ],
+  "flags": [],
+  "photos": [
+    {
+      "kind": "capture",
+      "storage": "r2",
+      "path": "scans/q7x2m9a/photo.jpg",
+      "public_url": "https://try.nailscan.ai/api/scans/q7x2m9a/photo.jpg",
+      "content_type": "image/jpeg"
+    },
+    {
+      "kind": "report",
+      "storage": "r2",
+      "path": "scans/q7x2m9a/report.html",
+      "public_url": "https://try.nailscan.ai/api/scans/q7x2m9a/report.html",
+      "content_type": "text/html"
+    }
+  ],
+  "milestones": [
+    {
+      "due_on": "2026-09-14",
+      "label": "Gel removal-by",
+      "sub": "(soaked, never peeled)",
+      "kind": "action",
+      "service_slug": "gel-removal",
+      "is_primary": true
+    },
+    {
+      "due_on": "2026-09-28",
+      "label": "Strengthening visit",
+      "sub": "polish-free block ends",
+      "kind": "action",
+      "service_slug": "biab-nail-strengthening-therapy",
+      "is_primary": false
+    },
+    {
+      "due_on": "2026-10-16",
+      "label": "Recovery check",
+      "sub": "ridges should soften",
+      "kind": "check",
+      "service_slug": null,
+      "is_primary": false
+    },
+    {
+      "due_on": "2026-11-09",
+      "label": "Tip damage fully grown out",
+      "sub": "≈ 3mm of growth a month",
+      "kind": "goal",
+      "service_slug": null,
+      "is_primary": false
+    }
+  ]
+}

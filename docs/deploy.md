@@ -164,7 +164,7 @@ existing scanner. No custom-field IDs in the code.
 ```
 
 The workflow should file the contact plus an Opportunity (NailScan 28 pipeline,
-New lead, $798 context) and start the Maya five-minute call branch.
+New lead, $199/mo + $399 setup context) and start the Maya five-minute call branch.
 
 **Build the Maya branch DISABLED**, with:
 

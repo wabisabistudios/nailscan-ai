@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NailScan Studio</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#07080A">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2307080A'/%3E%3Ccircle cx='16' cy='16' r='8.5' fill='none' stroke='%23FF5233' stroke-width='2.5' stroke-dasharray='34 20' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%2358D5E8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="/css/studio.css">
+</head>
+<body data-view="boot">
+
+<!-- ================================================================= BOOT -->
+<div class="boot" id="v-boot"><span class="boot-mark" role="status" aria-label="Opening the book"></span></div>
+
+<!-- ================================================================ LOGIN -->
+<section class="gate" id="v-login" hidden>
+  <div class="gate-inner">
+    <div class="wordmark">NAILSCAN</div>
+    <p class="eyebrow">Studio</p>
+    <h1>The book.</h1>
+    <p class="lede">Every client, every reading, every photo — in one place.</p>
+
+    <form id="login-form" novalidate>
+      <div class="field">
+        <label for="in-email">Email</label>
+        <input id="in-email" type="email" autocomplete="username" inputmode="email" required>
+      </div>
+      <div class="field">
+        <label for="in-pass">Password</label>
+        <input id="in-pass" type="password" autocomplete="current-password" required>
+      </div>
+      <p class="form-err" id="login-err" hidden></p>
+      <button class="btn" type="submit" id="btn-login"><span>Open the book</span><span class="arrow">&rarr;</span></button>
+    </form>
+
+    <button class="btn-text" id="btn-magic">Email me a sign-in link instead</button>
+    <p class="fine" id="magic-note" hidden>Check your inbox — the link opens the book on this device.</p>
+  </div>
+</section>
+
+<!-- ================================================================= SHELL -->
+<div class="shell" id="v-shell" hidden>
+
+  <header class="bar">
+    <button class="bar-back" id="btn-back" hidden aria-label="Back to the book">&larr;</button>
+    <div class="bar-id">
+      <span class="wordmark sm" id="tenant-mark">NAILSCAN</span>
+      <span class="bar-sub" id="tenant-name"></span>
+    </div>
+    <div class="bar-right">
+      <button class="pill pill-btn" id="btn-hq" hidden type="button">HQ</button>
+      <span class="pill" id="credit-pill" hidden></span>
+      <button class="seat" id="btn-seat" aria-label="Account"><span id="seat-initials">··</span></button>
+    </div>
+  </header>
+
+  <!-- ------------------------------------------------------------- BOOK -->
+  <main class="view" id="v-book" hidden>
+
+    <div class="search-wrap">
+      <input class="search" id="q" type="search" enterkeyhint="search"
+             placeholder="Search a name or a number" autocomplete="off" spellcheck="false">
+      <button class="search-clear" id="q-clear" hidden aria-label="Clear">&times;</button>
+    </div>
+
+    <section class="band" id="due-band" hidden>
+      <div class="band-head">
+        <p class="eyebrow">Due this week</p>
+        <span class="n" id="due-n"></span>
+      </div>
+      <ul class="rows" id="due-rows"></ul>
+    </section>
+
+    <section class="band">
+      <div class="band-head">
+        <p class="eyebrow" id="book-label">Recently in</p>
+        <span class="n" id="book-n"></span>
+      </div>
+      <ul class="rows" id="book-rows"></ul>
+      <p class="empty" id="book-empty" hidden>Nobody here yet. The first scan opens the first file.</p>
+    </section>
+
+  </main>
+
+  <!-- ------------------------------------------------------- CLIENT FILE -->
+  <main class="view file" id="v-file" hidden>
+
+    <header class="file-head">
+      <h1 id="f-name"></h1>
+      <p class="file-meta" id="f-meta"></p>
+      <div class="chips" id="f-chips"></div>
+    </header>
+
+    <div class="tiles" id="f-tiles"></div>
+
+    <section class="band" id="f-photos-band" hidden>
+      <div class="band-head">
+        <p class="eyebrow">Every reading</p>
+        <span class="n" id="f-photos-n"></span>
+      </div>
+      <div class="strip" id="f-photos"></div>
+    </section>
+
+    <section class="band" id="f-findings-band" hidden>
+      <div class="band-head">
+        <p class="eyebrow">What we keep seeing</p>
+        <span class="n" id="f-findings-n"></span>
+      </div>
+      <div class="legend" id="f-legend"></div>
+      <ul class="findings" id="f-findings"></ul>
+      <p class="fine strip-key" id="f-findings-key"></p>
+    </section>
+
+    <section class="band" id="f-notes-band">
+      <div class="band-head"><p class="eyebrow">Desk notes</p></div>
+      <form class="note-add" id="note-form">
+        <input id="note-in" type="text" placeholder="Something worth remembering next time" maxlength="400">
+        <button class="btn-quiet" type="submit">Add</button>
+      </form>
+      <ul class="notes" id="f-notes"></ul>
+    </section>
+
+    <section class="band">
+      <div class="band-head">
+        <p class="eyebrow">The story</p>
+        <span class="n" id="f-events-n"></span>
+      </div>
+      <ol class="story" id="f-events"></ol>
+    </section>
+
+  </main>
+
+  <!-- ---------------------------------------------------------------- HQ -->
+  <main class="view" id="v-hq" hidden></main>
+
+  <p class="crash" id="crash" hidden></p>
+</div>
+
+<script src="/config.js"></script>
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>

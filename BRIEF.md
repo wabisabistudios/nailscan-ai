@@ -84,7 +84,7 @@ it.
 `POST /api/lead` → inbound-webhook workflow in the NailScan.ai sub-account
 (location `cj1dKYGBhaLLrI6e0Jkg`): name, salon, phone, email, country, scan
 summary, `source=try-demo`, tag `demo`. Workflow files the contact plus an
-Opportunity (NailScan 28 pipeline, New lead, $798 context) and starts the Maya
+Opportunity (NailScan 28 pipeline, New lead, $199/mo + $399 setup context) and starts the Maya
 5-minute call branch — built **disabled**, with a calling-hours guard, area-code
 routing East/Pacific/Mountain, and v1 calling every scanner (no purchase check
 yet). First-ever call goes to Bit Mystic's own number as the test.

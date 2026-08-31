@@ -1,5 +1,26 @@
-.DS_Store
-.wrangler/
 node_modules/
+.env
+.env.local
+.DS_Store
 *.log
+.cache/
+dist/
+.next/
+__pycache__/
+*.pyc
+
+# Wrangler's local state and cache. Was dropped from this file at some point
+# and started showing up as an untracked directory on every status.
+.wrangler/
 .dev.vars
+
+# Real customer records pulled from GHL — names, emails, addresses, notes.
+# This repository is public. These never go in it.
+ghl-filer/
+
+# Source media, 18 MB. Lives on disk and in the asset store, not in git.
+ai videos and images/
+
+# Working files
+_to_delete/
+*.tgz

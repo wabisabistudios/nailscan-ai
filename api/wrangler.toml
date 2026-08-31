@@ -7,7 +7,7 @@ compatibility_date = "2026-05-01"
 # has access to ONE account (6fc1ea596c194da25f8a76d86a324ba4). It cannot reach the
 # account below. Re-auth as Ad@basedaesthetics.co, or export a scoped API token,
 # before any command here will run. See docs/deploy.md.
-account_id = "cb9d1952be3e0c9b91c3da6462bac872"
+account_id = "bff134738ac2adf91686a4fcca2c5684"
 
 # No `routes`. nailscan.ai's DNS is hosted in GoHighLevel, not Cloudflare, so the
 # zone does not exist here and a Worker route on try.nailscan.ai/api/* is not
@@ -18,9 +18,54 @@ workers_dev = true
 [vars]
 VISION_MODEL = "claude-sonnet-4-6"
 SITE_BASE = "https://try.nailscan.ai"
+
+# ---------------------------------------------------------------------------
+# Client file (Supabase). The Worker writes every reading here through two
+# Postgres functions — see api/src/store.js and platform/supabase.
+#
+# SUPABASE_URL is public by design; the key is not. Set it once, as a secret:
+#   wrangler secret put SUPABASE_SERVICE_KEY     # sb_secret_... — NEVER a var
+#
+# TENANT_SLUG decides whose book a public try-demo scan lands in. Each salon
+# install points at its own tenant; this one is the NailScan demo.
+#
+# With any of the three missing, the Worker skips Postgres entirely and behaves
+# exactly as it did before: KV record, R2 photo, GHL push. Nothing breaks.
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# White-label, per deployment. The palette is NOT here and is not a client
+# setting — see public/config.js. These are the things that ARE the salon's:
+# their name on the reading, their site in the link that goes to the CRM, and
+# their locale and city in the dates and booking lines.
+#
+# Unset, everything falls back to the NailScan demo install.
+# ---------------------------------------------------------------------------
+# BRAND_NAME = "Polished Nails"
+# BRAND_CITY = "Austin"
+# BRAND_LOCALE = "en-US"
+
+SUPABASE_URL = "https://rwerqcitegpivpzdjsik.supabase.co"
+TENANT_SLUG = "nailscan-demo"
+
+# ---------------------------------------------------------------------------
+# How the Worker decides whose salon a request belongs to.
+#
+#   "fixed"  TENANT_SLUG above. One deployment, one salon. THE DEFAULT, and
+#            exactly how this has always behaved.
+#   "host"   the request URL's hostname, looked up in tenant_domains.
+#
+# "host" has a deployment requirement, not just a flag: the Worker must be
+# ROUTED on each salon's hostname, so that request.url carries it. Reached at
+# its workers.dev address the Worker cannot tell salons apart, and it will say
+# so in the log and fall back to TENANT_SLUG rather than guess.
+#
+# Every failure degrades to "fixed": unknown host, slow database, unreachable
+# Supabase. A database problem must never cost somebody her reading.
+# ---------------------------------------------------------------------------
+TENANT_RESOLUTION = "fixed"
 # Comma-separated, exact scheme+host. An origin not on this list is answered with
 # allowed[0], which the browser rejects — the API fails closed.
-ALLOWED_ORIGINS = "https://try.nailscan.ai,https://nailscan-try.pages.dev,http://localhost:8791"
+ALLOWED_ORIGINS = "https://try.nailscan.ai,https://nailscan-try-aqf.pages.dev,http://localhost:8791"
 
 # Secrets — NOT stored here. Set once per environment:
 #   wrangler secret put ANTHROPIC_API_KEY     # its own key, not Based's
@@ -37,9 +82,9 @@ ALLOWED_ORIGINS = "https://try.nailscan.ai,https://nailscan-try.pages.dev,http:/
 #   wrangler kv namespace create REPORTS
 # then paste the printed id and uncomment.
 # ---------------------------------------------------------------------------
-# [[kv_namespaces]]
-# binding = "REPORTS"
-# id = "PASTE_REPORTS_NAMESPACE_ID"
+[[kv_namespaces]]
+binding = "REPORTS"
+id = "0551babe0cbe46dab8c7d9b4789c62ac"
 
 # Optional per-IP rate limiting (12 scans/hr, 20 lead posts/hr). Without it the
 # endpoints are open.
@@ -49,13 +94,20 @@ ALLOWED_ORIGINS = "https://try.nailscan.ai,https://nailscan-try.pages.dev,http:/
 # id = "PASTE_RATE_LIMIT_NAMESPACE_ID"
 
 # ---------------------------------------------------------------------------
-# R2 — optional. Stores scans/<id>/photo.jpg and an archival report.html,
-# served back at /api/scans/<id>/<file>. Without it, scan_image_url is "".
+# R2 SCANS — REQUIRED for client photo history.
+#
+# Stores scans/<id>/photo.jpg and an archival report.html, served back at
+# /api/scans/<id>/<file>. Without this binding the photo is discarded the moment
+# the reading is generated: scan_image_url is "", the CRM gets no image, and a
+# client file can never show a before/after. That is the whole visit history.
+#
+# CREATE THE BUCKET BEFORE THE NEXT DEPLOY — a binding to a bucket that does not
+# exist makes `wrangler deploy` fail:
 #   wrangler r2 bucket create nailscan-try-scans
 # ---------------------------------------------------------------------------
-# [[r2_buckets]]
-# binding = "SCANS"
-# bucket_name = "nailscan-try-scans"
+[[r2_buckets]]
+binding = "SCANS"
+bucket_name = "nailscan-try-scans"
 
 [observability]
 enabled = true

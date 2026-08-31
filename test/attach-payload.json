@@ -1,0 +1,10 @@
+{
+  "tenant_slug": "nailscan-demo",
+  "public_id": "q7x2m9a",
+  "phone": "+14155559999",
+  "email": "nina@example.com",
+  "name": "Nina Rao",
+  "salon": "Polished",
+  "source": "try-demo",
+  "consent_text": "By submitting, you agree NailScan may contact you about your scan."
+}

@@ -2,7 +2,7 @@
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=()
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Cross-Origin-Opener-Policy: same-origin
 
 /css/*
@@ -11,9 +11,10 @@
 /js/*
   Cache-Control: public, max-age=3600
 
+# The white-label boundary. Never let an edge hold a stale brand or a stale key.
 /config.js
   Cache-Control: no-cache
 
-# The saved reading is per-person. Never let an edge or a proxy hold it.
-/report
+# The book itself is per-person and per-session. Nothing about it is cacheable.
+/
   Cache-Control: no-store

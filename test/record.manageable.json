@@ -19,26 +19,31 @@
    },
    "checks": [
     {
+     "hd": "Tips peeling in layers",
      "k": "Free edge · index + middle + ring, tips",
      "v": "The tips are peeling in layers — the signature of <b>coatings taken off the hard way.</b>",
      "status": "note"
     },
     {
+     "hd": "Fine vertical ridges",
      "k": "Surface · all five, mid-plate",
      "v": "Fine vertical ridges with light dryness — asking for <b>moisture, not repair.</b>",
      "status": "note"
     },
     {
+     "hd": "Cuticles intact but dry",
      "k": "Cuticle · thumb + index, cuticles",
      "v": "Cuticles are intact but dry — a drop of oil a day is the whole prescription.",
      "status": "note"
     },
     {
+     "hd": "Grow-out at the base",
      "k": "Wear · all five, base",
      "v": "Visible grow-out at the base — the coat is past its best and starting to lever at the edges.",
      "status": "note"
     },
     {
+     "hd": "Healthy cuticles",
      "k": "Cuticle · all five",
      "v": "Healthy, intact cuticles — whoever’s been minding them, keep going.",
      "status": "good"

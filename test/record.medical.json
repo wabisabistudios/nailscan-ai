@@ -19,6 +19,7 @@
    },
    "checks": [
     {
+     "hd": "The plate reads thin",
      "k": "Plate · ring, tips",
      "v": "The plate reads thin — bendy tips, shadows under light. It rebuilds; it just needs the cycle broken.",
      "status": "note"

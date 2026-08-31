@@ -19,16 +19,19 @@
    },
    "checks": [
     {
+     "hd": "A smooth, even plate",
      "k": "Plate · all five",
      "v": "A smooth, even plate — whatever you’re doing, it’s working.",
      "status": "good"
     },
     {
+     "hd": "Healthy cuticles",
      "k": "Cuticle · all five",
      "v": "Healthy, intact cuticles — whoever’s been minding them, keep going.",
      "status": "good"
     },
     {
+     "hd": "Even length and shape",
      "k": "Structure · all five",
      "v": "Even length and shape across the hand.",
      "status": "good"

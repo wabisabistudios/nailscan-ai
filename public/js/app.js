@@ -163,10 +163,31 @@
     if (!verdict.pass) return showReject(verdict);
 
     state.warnings = verdict.warnings;
+    state.metrics = verdict.metrics;
+    state.frame = { w: canvas.width, h: canvas.height };
     state.dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     state.uploadUrl = encodeForUpload(canvas);
     stopCamera();
     analyze();
+  }
+
+  /* One row per reading. Colour is never the only signal — each row also
+     carries a word and a mark, so it survives a colourblind eye and a
+     screenshot printed in black and white. */
+  function probe(rows) {
+    var dl = $('an-probe');
+    if (!dl) return;
+    dl.replaceChildren();
+    rows.forEach(function (r, i) {
+      var dt = document.createElement('dt');
+      dt.textContent = r[0];
+      var dd = document.createElement('dd');
+      dd.className = 'p-' + r[2];
+      dd.textContent = r[1];
+      dt.style.setProperty('--i', i);
+      dd.style.setProperty('--i', i);
+      dl.appendChild(dt); dl.appendChild(dd);
+    });
   }
 
   function fmt(n, d) { return (Math.round(n * Math.pow(10, d || 0)) / Math.pow(10, d || 0)).toFixed(d || 0); }
@@ -203,31 +224,44 @@
 
   /* --------------------------------------------------------- analysing -- */
 
-  var STEPS = ['Uploading frame', 'Reading plate surface', 'Checking cuticle line', 'Compiling record'];
-
   async function analyze() {
     $('an-photo').src = state.dataUrl;
     stage('analyzing');
 
-    var t0 = Date.now(), done = false, i = 0;
-    $('an-step').textContent = STEPS[0];
+    var t0 = Date.now(), done = false;
+    $('an-step').textContent = 'Reading your photo';
     $('an-fill').style.width = '4%';
     $('an-pct').textContent = '04%';
 
+    /* What the screen shows while it waits.
+     *
+     * Not a list of invented steps — one request goes out and one comes back,
+     * and this page cannot see inside it. Every number here was actually
+     * measured, on this device, on this photo, before it was uploaded: the
+     * gate's own readings. When the response lands they are replaced by the
+     * fields the engine actually returned. Nothing is timed to look busy. */
+    probe(state.metrics ? [
+      ['Exposure',  fmt(state.metrics.meanLuma) + ' / 255',      'ok'],
+      ['In shadow', fmt(state.metrics.shadowPct, 1) + '%',       'ok'],
+      ['Focus',     fmt(state.metrics.laplacianVar) + ' var',
+        state.metrics.laplacianVar < CFG.gate.minLaplacianVar ? 'warn' : 'ok'],
+      ['Frame',     state.frame ? state.frame.w + ' \u00d7 ' + state.frame.h : '—', 'idle']
+    ] : [['Frame', 'admitted', 'ok']]);
+
     // Progress is time-based and asymptotic — it approaches 92% and holds there
-    // until the response actually lands. It never claims a step it cannot see.
+    // until the response actually lands.
+    //
+    // It used to also cycle through "Reading plate surface", "Checking cuticle
+    // line", "Compiling record" on a timer. Those were invented: one HTTP call
+    // goes out and one comes back, and the page cannot see inside it. A product
+    // whose whole promise is an honest reading should not open with four
+    // sentences of theatre. One true line, and the bar.
     var tick = setInterval(function () {
       if (done) return;
       var t = (Date.now() - t0) / 1000;
       var pct = Math.min(92, 4 + 88 * (1 - Math.exp(-t / 7)));
       $('an-fill').style.width = pct + '%';
       $('an-pct').textContent = String(Math.round(pct)).padStart(2, '0') + '%';
-      var want = Math.min(STEPS.length - 1, Math.floor(t / 3.2));
-      if (want !== i) {
-        i = want;
-        $('an-step').style.opacity = 0;
-        setTimeout(function () { $('an-step').textContent = STEPS[i]; $('an-step').style.opacity = 1; }, 180);
-      }
     }, 220);
 
     try {
@@ -242,7 +276,17 @@
       done = true; clearInterval(tick);
       $('an-fill').style.width = '100%';
       $('an-pct').textContent = '100%';
-      $('an-step').textContent = 'Record complete';
+      $('an-step').textContent = 'Reading ready';
+
+      // the readout switches to what actually came back
+      var d = body.record.debug || body.record.perception || {};
+      var disp = body.record.display || {};
+      probe([
+        ['Nails read',  d.nails_visible != null ? String(d.nails_visible) : '5', 'ok'],
+        ['Hand',        (disp.map && disp.map.hand) || d.hand || '—', 'ok'],
+        ['Wear',        body.record.wear || '—', 'ok'],
+        ['Findings',    String((disp.checks || []).length), 'ok']
+      ]);
 
       state.record = body.record;
       setTimeout(function () { renderReport(body.record); }, REDUCED ? 0 : 420);
@@ -266,16 +310,7 @@
     $('rep-line').innerHTML = v.line || '';
     $('rep-sub').textContent = v.sub || '';
 
-    var ul = $('rep-checks');
-    ul.innerHTML = '';
-    (d.checks || []).forEach(function (c) {
-      var li = document.createElement('li');
-      li.className = c.status === 'good' ? 'good' : 'note';
-      var k = document.createElement('span'); k.className = 'k'; k.textContent = c.k;
-      var val = document.createElement('span'); val.className = 'v'; val.innerHTML = c.v;
-      li.appendChild(k); li.appendChild(val);
-      ul.appendChild(li);
-    });
+    renderChecks($('rep-checks'), d.checks);
     $('rep-checks-block').hidden = (d.checks || []).length === 0;
     $('rep-checks-n').textContent = (d.checks || []).length
       ? String((d.checks || []).length).padStart(2, '0') + ' OBSERVED' : '';
@@ -298,8 +333,12 @@
       $('rep-lock').hidden = false;
       $('rep-lockline').textContent = d.calendar.milestones.length + ' dated milestones'
         + (d.calendar.grown_out ? ' · grow-out date' : '')
+        + ' · a calendar you can add to your phone'
         + (d.carry ? ' · what suits you' : '');
-      $('rep-cal-intro').textContent = d.calendar.intro || '';
+      // The copy bank marks up its own emphasis (<b>out</b>, not deeper) and is
+      // ours, server-side and closed — the same trust the headline and the
+      // checks already get. textContent here printed the tags on screen.
+      $('rep-cal-intro').innerHTML = d.calendar.intro || '';
       var tl = $('rep-timeline'); tl.innerHTML = '';
       d.calendar.milestones.forEach(function (m) {
         var li = document.createElement('li');
@@ -364,6 +403,67 @@
 
     stage('report');
     revealIn();
+
+    // Right keyboard, right autofill, no hunting. The form is the only thing
+    // between her and the calendar; every tap it does not cost is worth having.
+    var nameField = $('in-name');
+    if (nameField) {
+      nameField.setAttribute('autocapitalize', 'words');
+      nameField.setAttribute('enterkeyhint', 'next');
+    }
+    $('in-phone').setAttribute('enterkeyhint', 'next');
+    $('in-email').setAttribute('enterkeyhint', 'go');
+  }
+
+  /* One line each, the rest on a tap.
+   *
+   * `hd` is the two-second version, `k` the location, `v` the sentence the
+   * copy bank wrote. Collapsed, the reading is a list you can take in at a
+   * glance; expanded, it is exactly as thorough as it was before. Nothing was
+   * cut — it just stopped arriving all at once.
+   */
+  function renderChecks(ul, checks) {
+    ul.innerHTML = '';
+    (checks || []).forEach(function (c) {
+      var li = document.createElement('li');
+      li.className = c.status === 'good' ? 'good' : 'note';
+
+      var head = document.createElement('button');
+      head.type = 'button';
+      head.className = 'k';
+      head.setAttribute('aria-expanded', 'false');
+      var hd = document.createElement('span');
+      hd.className = 'hd';
+      hd.textContent = c.hd || c.k;
+      var more = document.createElement('span');
+      more.className = 'more';
+      more.textContent = 'Why';
+      head.appendChild(hd);
+      head.appendChild(more);
+
+      var body = document.createElement('div');
+      body.className = 'v';
+      body.hidden = true;
+      var loc = document.createElement('span');
+      loc.className = 'loc';
+      loc.textContent = c.k;
+      var p = document.createElement('p');
+      p.innerHTML = c.v;                      // closed, server-side copy bank
+      body.appendChild(loc);
+      body.appendChild(p);
+
+      head.addEventListener('click', function () {
+        var openNow = body.hidden;
+        body.hidden = !openNow;
+        head.setAttribute('aria-expanded', String(openNow));
+        li.classList.toggle('is-open', openNow);
+        more.textContent = openNow ? 'Hide' : 'Why';
+      });
+
+      li.appendChild(head);
+      li.appendChild(body);
+      ul.appendChild(li);
+    });
   }
 
   function revealIn() {
@@ -472,6 +572,17 @@
     }
   });
 
+  /* The confirmation promises only what this code actually does.
+   *
+   * It used to say "a copy is on its way to <email>" — but nothing here sends
+   * mail, and nothing in the Worker does either. Whether an email goes out is
+   * the CRM workflow's business, and that workflow may not exist yet. Claiming
+   * a send we cannot see is a lie told to every lead.
+   *
+   * What IS true, always: the record is stored, and its permanent link is
+   * <site>/report?id=<id>. So we hand her the link. If the workflow later mails
+   * the same link, the copy is still true.
+   */
   function unlock(name, email) {
     var hadLock = !$('rep-lock').hidden;
     if (hadLock) {
@@ -481,14 +592,119 @@
     }
     $('rep-form-block').hidden = true;
     document.querySelector('#rep-done .stamp').lastChild.textContent =
-      hadLock ? 'Calendar unlocked' : 'Reading sent';
-    $('done-copy').textContent = 'A copy of this reading is on its way to ' + email
-      + (hadLock ? '. Your calendar is open below.' : '.');
+      hadLock ? 'Calendar unlocked' : 'Reading saved';
+
+    $('done-h').textContent = hadLock ? 'It\u2019s open below.' : 'Saved.';
+    $('done-copy').textContent = hadLock
+      ? 'Your calendar is unlocked below. The reading is saved \u2014 keep the link and it opens on any device.'
+      : 'The reading is saved \u2014 keep the link and it opens on any device.';
+
+    var link = $('done-link');
+    if (state.record && state.record.id) {
+      link.href = location.origin + '/report?id=' + encodeURIComponent(state.record.id);
+      link.hidden = false;
+    }
+
+    // The teaser did its job. Replace it with the calendar she can touch.
+    //
+    // This only happens now, on unlock, and not a moment earlier: a form
+    // control behind a blur is still focusable, still in the tab order, and
+    // still readable to a screen reader — which would make the lock a lie as
+    // well as an annoyance.
+    if (hadLock && window.NailScanCalendar && window.NailScanPlan) {
+      var teaser = $('rep-timeline');
+      if (teaser) teaser.remove();
+      var intro = $('rep-cal-intro');
+      if (intro) intro.remove();
+      try {
+        NailScanCalendar.mount({
+          root: $('rep-plan-mount'),
+          record: state.record,
+          cfg: CFG,
+          onExport: function (detail) { pingPlanSaved(state.record && state.record.id, detail); }
+        });
+      } catch (e) {
+        // The reading is the product; the planner is a layer on top of it. If
+        // the layer fails, put the plain dates back rather than showing a gap.
+        renderFallbackTimeline();
+      }
+    }
+
     $('rep-done').hidden = false;
     $('rep-done').scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'center' });
   }
 
+  /* Tell the studio she saved it.
+   *
+   * Fire and forget, and deliberately AFTER the download rather than before: by
+   * the time this goes out the file is already in her downloads, so a failure
+   * here is ours to reconcile and never something she is shown. keepalive lets
+   * it survive her closing the tab on the way to her calendar.
+   */
+  function pingPlanSaved(scanId, detail) {
+    if (!scanId || !CFG.api.plan) return;
+    try {
+      fetch(CFG.api.base + CFG.api.plan, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          id: scanId,
+          items: detail.items,
+          service: detail.service,
+          rhythm: detail.rhythm,
+          event_date: detail.event_date,
+          event_label: detail.event_label,
+          source: 'try-demo'
+        })
+      }).catch(function () {});
+    } catch (e) { /* never her problem */ }
+  }
+
+  /* If the interactive calendar cannot mount, the dates still have to be on
+   * screen. Same milestones, plain list, no interaction. */
+  function renderFallbackTimeline() {
+    var d = state.record && state.record.display;
+    var cal = d && d.calendar;
+    if (!cal || !cal.milestones) return;
+    var mount = $('rep-plan-mount');
+    mount.replaceChildren();
+    var ul = document.createElement('ul');
+    ul.className = 'timeline';
+    cal.milestones.forEach(function (m) {
+      var li = document.createElement('li');
+      var dt = document.createElement('span'); dt.className = 'dt'; dt.textContent = shortDate(m.date);
+      var bd = document.createElement('span'); bd.className = 'bd';
+      var b = document.createElement('b'); b.textContent = m.label;
+      bd.appendChild(b);
+      if (m.sub) { var sp = document.createElement('span'); sp.textContent = m.sub; bd.appendChild(sp); }
+      li.appendChild(dt); li.appendChild(bd);
+      ul.appendChild(li);
+    });
+    mount.appendChild(ul);
+  }
+
   /* ------------------------------------------------------------- wiring -- */
+
+  /* The loop only plays once it is on screen and the browser has been told
+     to fetch it — preload="none" keeps 40KB off the critical path on a salon's
+     phone, which is the whole point of a page that promises twenty seconds. */
+  (function () {
+    var fig = $('intro-loop'), v = $('loop-v');
+    if (!fig || !v) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var start = function () { v.preload = 'auto'; v.load(); v.play().catch(function () {}); };
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) { start(); io.disconnect(); } });
+      }, { threshold: .25 });
+      io.observe(fig);
+    } else { start(); }
+
+    // it answers the button once, then the capture opens over it
+    $('btn-start').addEventListener('click', function () { fig.classList.add('is-armed'); });
+  })();
 
   $('btn-start').addEventListener('click', openCamera);
   $('btn-retake').addEventListener('click', openCamera);

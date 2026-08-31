@@ -45,6 +45,36 @@ class H(http.server.SimpleHTTPRequestHandler):
                 return
             self._json({'error': 'no_fixture'}, 404)
             return
+
+        # The saved-reading endpoint the /report page reads. Same route the
+        # Worker serves from KV; ?tier= picks which generated record comes back
+        # so every report shape can be opened by link locally.
+        if self.path.startswith('/api/report/'):
+            path, _, query = self.path.partition('?')
+            # The page only ever sends an id, so the id IS the switch here:
+            #   /report?id=medical  opens the medical fixture.
+            # Anything else falls back to manageable.
+            scan_id = path.rsplit('/', 1)[-1]
+            tier = scan_id if scan_id in ('healthy', 'manageable', 'medical', 'unclear') else 'manageable'
+            for pair in query.split('&'):
+                if pair.startswith('tier='):
+                    tier = pair[5:]
+            fixture = os.path.join(HERE, f'record.{tier}.json')
+            if not os.path.isfile(fixture):
+                fixture = FIXTURE
+            with open(fixture) as f:
+                rec = json.load(f)
+            rec = rec.get('record', rec)
+            rec.pop('lead', None)
+            return self._json(rec)
+
+        # Cloudflare Pages serves /report.html for /report (see public/_redirects).
+        # Mirror it here, so a local walk-through follows the exact URLs the CRM
+        # and the follow-up email will contain.
+        clean, _, _q = self.path.partition('?')
+        if clean == '/report':
+            self.path = '/report.html'
+
         super().do_GET()
 
     def do_POST(self):
@@ -65,6 +95,12 @@ class H(http.server.SimpleHTTPRequestHandler):
             time.sleep(DELAY)
             with open(fixture) as f:
                 return self._json(json.load(f))
+        if path == '/api/plan':
+            # What GHL would receive when somebody saves reminders to her phone.
+            print('  [mock] plan saved:',
+                  {k: v for k, v in body.items() if k != 'items'},
+                  '| items:', [i.get('title') for i in body.get('items', [])])
+            return self._json({'ok': True, 'matched': True})
         if path == '/api/lead':
             print('  [mock] lead:', {k: v for k, v in body.items() if k != 'image'})
             return self._json({'ok': True, 'delivered': True})
