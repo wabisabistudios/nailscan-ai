@@ -16,7 +16,10 @@ account_id = "bff134738ac2adf91686a4fcca2c5684"
 workers_dev = true
 
 [vars]
-VISION_MODEL = "claude-sonnet-4-6"
+# Perception providers, tried in this order. A provider is skipped when its
+# key is not set, so removing one is a secret change, not a deploy.
+#   GOOGLE_API_KEY  QWEN_API_KEY   (wrangler secret put ...)
+VISION_ORDER = "gemini,qwen"
 SITE_BASE = "https://try.nailscan.ai"
 
 # ---------------------------------------------------------------------------
@@ -45,7 +48,7 @@ SITE_BASE = "https://try.nailscan.ai"
 # BRAND_LOCALE = "en-US"
 
 SUPABASE_URL = "https://rwerqcitegpivpzdjsik.supabase.co"
-TENANT_SLUG = "nailscan-demo"
+TENANT_SLUG = "demo-public"
 
 # ---------------------------------------------------------------------------
 # How the Worker decides whose salon a request belongs to.

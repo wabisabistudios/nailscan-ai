@@ -103,32 +103,123 @@ Rules:
 JSON only.`;
 }
 
-async function callVision(env, imageB64, mediaType) {
-  const model = env.VISION_MODEL || 'claude-sonnet-4-6';
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+/* ---------------------------------------------------------------- vision --
+ *
+ * Perception runs on somebody else's model, and somebody else's model can be
+ * down, rate-limited, or holding a key that expired without telling anyone.
+ * That last one is not hypothetical: this Worker ran for weeks returning
+ * `vision_http_401`, and because a model failure degrades to the `unclear`
+ * tier rather than erroring, every client got a polite "we couldn't quite
+ * read that one" and the scanner looked like it was working.
+ *
+ * So this layer has two jobs, and the second matters as much as the first:
+ *
+ *   1. Try each configured provider in order until one answers.
+ *   2. Make a total failure LOUD. `unclear` is a real reading for a real bad
+ *      photo; it must never also be the silent symptom of a dead key.
+ *
+ * Providers are chosen by which keys exist, in VISION_ORDER. Endpoints and
+ * model names come from env so a provider that moves its API is a variable
+ * change, not a deploy of new code.
+ */
+
+const VISION_DEFAULTS = {
+  gemini: {
+    model: 'gemini-3.7-flash',
+    base:  'https://generativelanguage.googleapis.com/v1beta'
+  },
+  qwen: {
+    model: 'qwen3-vl-plus',
+    base:  'https://dashscope-intl.aliyuncs.com/compatible-mode/v1'
+  }
+};
+
+/* Google. Native JSON mode, so the response needs no fishing out of prose. */
+async function visionGemini(env, imageB64, mediaType) {
+  const model = env.GEMINI_MODEL || VISION_DEFAULTS.gemini.model;
+  const base  = env.GEMINI_BASE  || VISION_DEFAULTS.gemini.base;
+  const res = await fetch(base + '/models/' + model + ':generateContent', {
     method: 'POST',
-    headers: {
-      'x-api-key': env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json'
-    },
+    headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GOOGLE_API_KEY },
+    body: JSON.stringify({
+      contents: [{
+        role: 'user',
+        parts: [
+          { inline_data: { mime_type: mediaType, data: imageB64 } },
+          { text: visionPrompt() }
+        ]
+      }],
+      generationConfig: { temperature: 0, maxOutputTokens: 1600, responseMimeType: 'application/json' }
+    })
+  });
+  if (!res.ok) throw new Error('gemini_http_' + res.status);
+  const data = await res.json();
+  const parts = (((data.candidates || [])[0] || {}).content || {}).parts || [];
+  return parts.map(p => p.text || '').join('');
+}
+
+/* Alibaba's Qwen, through its OpenAI-compatible surface. Same shape as any
+   OpenAI chat call, so a data: URI is what carries the photo. */
+async function visionQwen(env, imageB64, mediaType) {
+  const model = env.QWEN_MODEL || VISION_DEFAULTS.qwen.model;
+  const base  = env.QWEN_BASE  || VISION_DEFAULTS.qwen.base;
+  const res = await fetch(base + '/chat/completions', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: 'Bearer ' + env.QWEN_API_KEY },
     body: JSON.stringify({
       model,
-      max_tokens: 1200,
       temperature: 0,
+      max_tokens: 1600,
       messages: [{
         role: 'user',
         content: [
-          { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageB64 } },
+          { type: 'image_url', image_url: { url: 'data:' + mediaType + ';base64,' + imageB64 } },
           { type: 'text', text: visionPrompt() }
         ]
       }]
     })
   });
-  if (!res.ok) throw new Error('vision_http_' + res.status);
+  if (!res.ok) throw new Error('qwen_http_' + res.status);
   const data = await res.json();
-  const text = (data.content || []).map(b => b.type === 'text' ? b.text : '').join('');
-  return parsePerception(text);
+  return (((data.choices || [])[0] || {}).message || {}).content || '';
+}
+
+const VISION_PROVIDERS = {
+  gemini: { key: 'GOOGLE_API_KEY', call: visionGemini },
+  qwen:   { key: 'QWEN_API_KEY',   call: visionQwen }
+};
+
+/* One reading. Tries providers in order; the first that answers wins.
+ * Returns the perception plus which provider produced it, so the record can
+ * say honestly where the reading came from. */
+async function callVision(env, imageB64, mediaType) {
+  const order = String(env.VISION_ORDER || 'gemini,qwen')
+    .split(',').map(s => s.trim()).filter(Boolean);
+
+  const tried = [];
+  for (const name of order) {
+    const p = VISION_PROVIDERS[name];
+    if (!p) { tried.push(name + ':unknown'); continue; }
+    if (!env[p.key]) { tried.push(name + ':no_key'); continue; }
+    try {
+      const text = await p.call(env, imageB64, mediaType);
+      const perception = parsePerception(text);
+      if (!perception) { tried.push(name + ':unparsable'); continue; }
+      perception.provider = name;
+      return perception;
+    } catch (e) {
+      tried.push(name + ':' + (e && e.message ? e.message : 'error'));
+    }
+  }
+
+  // Nothing answered. This is an outage, not an unreadable photo, and the
+  // difference has to survive into the logs and into the record.
+  const detail = tried.join(' | ') || 'no_provider_configured';
+  console.error('[vision] ALL PROVIDERS FAILED: ' + detail);
+  const err = new Error('vision_unavailable');
+  err.detail = detail;
+  err.outage = true;
+  throw err;
 }
 
 function parsePerception(text) {
@@ -829,10 +920,27 @@ async function handleAnalyze(request, env, C, ctx) {
   const mediaType = m[1], imageB64 = m[2];
   const now = new Date();
 
-  // Perception. A model failure degrades to tier `unclear`, never to an error.
+  // Perception.
+  //
+  // A photo the model genuinely cannot read is the `unclear` tier — a real
+  // reading, and the client sees an honest "try again in better light".
+  //
+  // Every provider being down is NOT that, and must never look like it. This
+  // Worker spent weeks returning `unclear` to everyone because a key had
+  // expired, and the screen it produced was indistinguishable from a bad
+  // photo. So an outage answers 503: the front end tells her the service is
+  // down and to come back, and nothing is written to her file.
   let perception = null;
-  try { perception = await callVision(env, imageB64, mediaType); }
-  catch (e) { console.log('[vision] failed: ' + (e && e.message)); perception = null; }
+  try {
+    perception = await callVision(env, imageB64, mediaType);
+  } catch (e) {
+    if (e && e.outage) {
+      console.error('[vision] OUTAGE — refusing to fake a reading: ' + (e.detail || ''));
+      return json({ error: 'vision_unavailable', detail: 'reading service is down' }, 503, C);
+    }
+    console.log('[vision] failed: ' + (e && e.message));
+    perception = null;
+  }
 
   const id = shortId();
   const record = buildRecord({ id, name: '', concern: null, perception, now });
