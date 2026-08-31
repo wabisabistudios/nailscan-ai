@@ -108,9 +108,17 @@ id = "0551babe0cbe46dab8c7d9b4789c62ac"
 # exist makes `wrangler deploy` fail:
 #   wrangler r2 bucket create nailscan-try-scans
 # ---------------------------------------------------------------------------
-[[r2_buckets]]
-binding = "SCANS"
-bucket_name = "nailscan-try-scans"
+# R2 is not enabled on this account, and enabling it is a dashboard step that
+# asks for a card even on the free tier. The Worker already degrades cleanly
+# without it (see `if (!env.SCANS)`): the reading still works, it just keeps no
+# archived copy of the photo or the report snapshot, and /api/scans/ 404s.
+#
+# To turn it on later: enable R2 in the dashboard, then
+#   npx wrangler r2 bucket create nailscan-try-scans
+# and uncomment these three lines.
+# [[r2_buckets]]
+# binding = "SCANS"
+# bucket_name = "nailscan-try-scans"
 
 [observability]
 enabled = true
